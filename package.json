@@ -84,6 +84,7 @@
     "prettier": "prettier --config ./.prettierrc.yaml --write \"**/*.{js,json,md,sol,ts}\"",
     "prettier:check": "prettier --check --config ./.prettierrc.yaml \"**/*.{js,json,md,sol,ts}\"",
     "test:matic:fork": "cross-env FORK=matic NETWORK=matic TS_NODE_TRANSPILE_ONLY=1 hardhat test ./test/**/*.ts",
+    "test:mainnet:fork": "cross-env FORK=mainnet NETWORK=matic TS_NODE_TRANSPILE_ONLY=1 hardhat test ./test/**/*.ts",
     "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain"
   },
   "contributors": [

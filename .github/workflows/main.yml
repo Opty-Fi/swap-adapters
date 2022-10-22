@@ -17,6 +17,7 @@ jobs:
         node-version: [12.x.x]
     
     env:
+      MAIN_RPC_URL: ${{ secrets.MAIN_RPC_URL}}
       MATIC_RPC_URL: ${{ secrets.MATIC_RPC_URL}}
       MNEMONIC: ${{ secrets.MNEMONIC}}
 
@@ -43,6 +44,7 @@ jobs:
         node-version: [12.x.x]
     
     env:
+      MAIN_RPC_URL: ${{ secrets.MAIN_RPC_URL}}
       MATIC_RPC_URL: ${{ secrets.MATIC_RPC_URL}}
       MNEMONIC: ${{ secrets.MNEMONIC}}
 
@@ -69,6 +71,7 @@ jobs:
         node-version: [12.x.x]
     
     env:
+      MAIN_RPC_URL: ${{ secrets.MAIN_RPC_URL}}
       MATIC_RPC_URL: ${{ secrets.MATIC_RPC_URL}}
       MNEMONIC: ${{ secrets.MNEMONIC}}
 
@@ -88,4 +91,4 @@ jobs:
           yarn typechain
       - name: Test
         run: |
-          yarn test:matic:fork
+          yarn test:mainnet:fork

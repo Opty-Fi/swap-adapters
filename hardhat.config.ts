@@ -3,33 +3,17 @@
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "solidity-coverage";
-import { resolve, join } from "path";
-import fs from "fs";
+import { resolve } from "path";
 import { config as dotenvConfig } from "dotenv";
 import { HardhatUserConfig, NetworkUserConfig } from "hardhat/types";
-import { ePolygonNetwork } from "./helpers/types";
+import { eEthereumNetwork, ePolygonNetwork } from "./helpers/types";
 import { NETWORKS_RPC_URL, buildForkConfig, NETWORKS_CHAIN_ID, NETWORKS_DEFAULT_GAS } from "./helper-hardhat-config";
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
 
-const SKIP_LOAD = process.env.SKIP_LOAD === "true";
 const MNEMONIC_PATH = "m/44'/60'/0'/0";
 const MNEMONIC = process.env.MNEMONIC || "";
 const NETWORK = process.env.NETWORK || "hardhat";
-
-// Prevent to load scripts before compilation and typechain
-if (!SKIP_LOAD) {
-  ["polygon"].forEach(folder => {
-    const tasksPath = join(__dirname, "tasks", folder);
-    fs.readdirSync(tasksPath)
-      .filter(pth => pth.includes(".ts"))
-      .forEach(task => {
-        require(`${tasksPath}/${task}`);
-      });
-  });
-  require("./tasks/accounts");
-  require("./tasks/clean");
-}
 
 const getCommonNetworkConfig = (networkName: eNetwork): NetworkUserConfig | undefined => ({
   url: NETWORKS_RPC_URL[networkName],
@@ -49,6 +33,7 @@ const config: HardhatUserConfig = {
   networks: {
     matic: getCommonNetworkConfig(ePolygonNetwork.matic),
     mumbai: getCommonNetworkConfig(ePolygonNetwork.mumbai),
+    mainnet: getCommonNetworkConfig(eEthereumNetwork.main),
     hardhat: {
       gasPrice: NETWORKS_DEFAULT_GAS[NETWORK],
       chainId: NETWORKS_CHAIN_ID[NETWORK],
