@@ -18,7 +18,7 @@ import { IAdapter } from "@optyfi/defi-legos/interfaces/defiAdapters/contracts/I
  * @dev Abstraction layer to UniswapV2 pool forks
  */
 
-contract UniswapV2PoolAdapter is IAdapter, AdapterModifiersBase {
+contract UniswapV2ExchangeAdapter is IAdapter, AdapterModifiersBase {
     using Address for address;
 
     constructor(address _registry) AdapterModifiersBase(_registry) {}
