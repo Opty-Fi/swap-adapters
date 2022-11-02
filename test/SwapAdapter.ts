@@ -9,7 +9,7 @@ import { shouldBehaveLikeUniswapPoolAdapter } from "./UniswapV2PoolAdapter.behav
 import { TestDeFiAdapter } from "../typechain";
 import { UniswapV2PoolAdapter } from "../typechain/UniswapV2PoolAdapter";
 
-describe("Curve on Polygon", function () {
+describe("Swap Adapters", function () {
   before(async function () {
     this.signers = {} as Signers;
     const signers: SignerWithAddress[] = await hre.ethers.getSigners();
@@ -23,7 +23,7 @@ describe("Curve on Polygon", function () {
     await this.mockRegistry.mock.getRiskOperator.returns(this.signers.riskOperator.address);
     this.testDeFiAdapterArtifact = await hre.artifacts.readArtifact("TestDeFiAdapter");
   });
-  describe.only("UniswapV2PoolAdapter", function () {
+  describe.only("UniswapV2ExchangeAdapter", function () {
     before(async function () {
       const uniswapV2PoolAdapterArtifact: Artifact = await hre.artifacts.readArtifact("UniswapV2PoolAdapter");
       this.uniswapV2PoolAdapter = <UniswapV2PoolAdapter>(
