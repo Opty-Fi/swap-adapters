@@ -21,12 +21,19 @@ import { IAdapter } from "@optyfi/defi-legos/interfaces/defiAdapters/contracts/I
 contract UniswapV2ExchangeAdapter is IAdapter, AdapterModifiersBase {
     using Address for address;
 
-    constructor(address _registry) AdapterModifiersBase(_registry) {}
+    address public immutable wrappedNetworkToken;
+
+    constructor(address _registry, address _wrappedNetworkToken) AdapterModifiersBase(_registry) {
+        wrappedNetworkToken = _wrappedNetworkToken;
+    }
 
     /**
      * @inheritdoc IAdapter
      */
-    function getPoolValue(address _liquidityPool, address _underlyingToken) public view override returns (uint256) {}
+    function getPoolValue(address _liquidityPool, address _underlyingToken) public view override returns (uint256) {
+        // use oracle
+        // add reserves of underlying token to the reserves of other token in underlying
+    }
 
     /**
      * @inheritdoc IAdapter
@@ -36,7 +43,10 @@ contract UniswapV2ExchangeAdapter is IAdapter, AdapterModifiersBase {
         address _underlyingToken,
         address _liquidityPool,
         uint256 _amount
-    ) external view override returns (bytes[] memory) {}
+    ) external view override returns (bytes[] memory) {
+        // use oracle for min amount
+        // swap underlying token to other token
+    }
 
     /**
      * @inheritdoc IAdapter
@@ -45,7 +55,9 @@ contract UniswapV2ExchangeAdapter is IAdapter, AdapterModifiersBase {
         address payable _vault,
         address _underlyingToken,
         address _liquidityPool
-    ) external view override returns (bytes[] memory) {}
+    ) external view override returns (bytes[] memory) {
+        return getDepositSomeCodes(_vault, _underlyingToken, _liquidityPool, ERC20(_underlyingToken).balanceOf(_vault));
+    }
 
     /**
      * @inheritdoc IAdapter
@@ -55,7 +67,10 @@ contract UniswapV2ExchangeAdapter is IAdapter, AdapterModifiersBase {
         address _underlyingToken,
         address _liquidityPool,
         uint256 _amount
-    ) public view override returns (bytes[] memory _codes) {}
+    ) public view override returns (bytes[] memory _codes) {
+        // use oracle for min amount
+        // swap other token to underlying token
+    }
 
     /**
      * @inheritdoc IAdapter
@@ -77,17 +92,21 @@ contract UniswapV2ExchangeAdapter is IAdapter, AdapterModifiersBase {
     /**
      * @inheritdoc IAdapter
      */
-    function getLiquidityPoolToken(address, address _liquidityPool) public view returns (address) {}
+    function getLiquidityPoolToken(address _underlyingToken, address _liquidityPool) public view returns (address) {
+        // return token other than _underlyingToken
+    }
 
     /**
      * @inheritdoc IAdapter
      */
-    function getUnderlyingTokens(address _liquidityPool, address)
+    function getUnderlyingTokens(address _liquidityPool, address _liquidityPoolToken)
         external
         view
         override
         returns (address[] memory _underlyingTokens)
-    {}
+    {
+        // return token other than _liquidityPoolToken
+    }
 
     /**
      * @inheritdoc IAdapter
@@ -110,9 +129,11 @@ contract UniswapV2ExchangeAdapter is IAdapter, AdapterModifiersBase {
      */
     function getLiquidityPoolTokenBalance(
         address payable _vault,
-        address,
+        address _underlyingToken,
         address _liquidityPool
-    ) public view override returns (uint256) {}
+    ) public view override returns (uint256) {
+        // balance of other token and not the underlyingToken
+    }
 
     /**
      * @inheritdoc IAdapter
@@ -121,7 +142,10 @@ contract UniswapV2ExchangeAdapter is IAdapter, AdapterModifiersBase {
         address _underlyingToken,
         address _liquidityPool,
         uint256 _liquidityPoolTokenAmount
-    ) public view override returns (uint256) {}
+    ) public view override returns (uint256) {
+        // use oracle
+        // amount of other token (_liquidityPoolTokenAmount) in underlying token
+    }
 
     /**
      * @inheritdoc IAdapter
@@ -130,7 +154,10 @@ contract UniswapV2ExchangeAdapter is IAdapter, AdapterModifiersBase {
         address _underlyingToken,
         address _liquidityPool,
         uint256 _underlyingTokenAmount
-    ) external view override returns (uint256) {}
+    ) external view override returns (uint256) {
+        // use oracle
+        // amount of _underlyingToken (_underlyingTokenAmount) in other token other token
+    }
 
     /**
      * @inheritdoc IAdapter
