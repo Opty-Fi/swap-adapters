@@ -43,7 +43,7 @@ contract UniswapV2ExchangeAdapter is IAdapter, AdapterModifiersBase {
         address _underlyingToken,
         address _liquidityPool,
         uint256 _amount
-    ) external view override returns (bytes[] memory) {
+    ) public view override returns (bytes[] memory) {
         // use oracle for min amount
         // swap underlying token to other token
     }
