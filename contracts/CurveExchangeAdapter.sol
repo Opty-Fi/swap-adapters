@@ -83,8 +83,6 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
         address _outputToken,
         uint256 _amount
     ) public view override returns (bytes[] memory) {
-        // use oracle for min amount
-        // swap other token to underlying token
         bytes[] memory _codes = new bytes[](1);
         _codes[0] = abi.encode(
             address(CurveRegistryExchange),
@@ -155,8 +153,6 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
         address _outputToken,
         uint256 _outputTokenAmount
     ) public view override returns (uint256) {
-        // use oracle
-        // amount of other token (_liquidityPoolTokenAmount) in underlying token
         return
             CurveRegistryExchange.get_exchange_amount(
                 _liquidityPool,
@@ -175,8 +171,6 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
         address _outputToken,
         uint256 _inputTokenAmount
     ) external view override returns (uint256) {
-        // use oracle
-        // amount of _underlyingToken (_underlyingTokenAmount) in other token other token
         return CurveRegistryExchange.get_input_amount(_liquidityPool, _outputToken, _inputToken, _inputTokenAmount);
     }
 }

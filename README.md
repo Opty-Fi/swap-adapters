@@ -2,9 +2,9 @@
 
 ## Adapter for Swap step
 
-- [ ] UniswapV2
+- [x] UniswapV2
 - [ ] UniswapV3
-- [ ] Curve
+- [x] Curve
 - [ ] Balancer
 
 ## Getting started
