@@ -6,7 +6,7 @@ import "solidity-coverage";
 import { resolve } from "path";
 import { config as dotenvConfig } from "dotenv";
 import { HardhatUserConfig, NetworkUserConfig } from "hardhat/types";
-import { eEthereumNetwork, ePolygonNetwork } from "./helpers/types";
+import { eEthereumNetwork, eNetwork, ePolygonNetwork } from "./helpers/types";
 import { NETWORKS_RPC_URL, buildForkConfig, NETWORKS_CHAIN_ID, NETWORKS_DEFAULT_GAS } from "./helper-hardhat-config";
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
@@ -14,11 +14,12 @@ dotenvConfig({ path: resolve(__dirname, "./.env") });
 const MNEMONIC_PATH = "m/44'/60'/0'/0";
 const MNEMONIC = process.env.MNEMONIC || "";
 const NETWORK = process.env.NETWORK || "hardhat";
+const FORK = process.env.FORK || "";
 
 const getCommonNetworkConfig = (networkName: eNetwork): NetworkUserConfig | undefined => ({
   url: NETWORKS_RPC_URL[networkName],
   gasPrice: "auto",
-  chainId: NETWORKS_CHAIN_ID[networkName],
+  chainId: NETWORKS_CHAIN_ID[networkName] as number,
   initialBaseFeePerGas: 1_00_000_000,
   accounts: {
     mnemonic: MNEMONIC,
@@ -31,12 +32,11 @@ const getCommonNetworkConfig = (networkName: eNetwork): NetworkUserConfig | unde
 
 const config: HardhatUserConfig = {
   networks: {
-    matic: getCommonNetworkConfig(ePolygonNetwork.matic),
-    mumbai: getCommonNetworkConfig(ePolygonNetwork.mumbai),
+    polygon: getCommonNetworkConfig(ePolygonNetwork.polygon),
     mainnet: getCommonNetworkConfig(eEthereumNetwork.main),
     hardhat: {
-      gasPrice: NETWORKS_DEFAULT_GAS[NETWORK],
-      chainId: NETWORKS_CHAIN_ID[NETWORK],
+      gasPrice: NETWORKS_DEFAULT_GAS[NETWORK as eNetwork],
+      chainId: NETWORKS_CHAIN_ID[NETWORK as eNetwork] as number,
       accounts: {
         initialIndex: 0,
         count: 20,
@@ -44,7 +44,7 @@ const config: HardhatUserConfig = {
         path: MNEMONIC_PATH,
         accountsBalance: "10000000000000000000000",
       },
-      forking: buildForkConfig(),
+      forking: buildForkConfig(FORK as eNetwork),
     },
   },
   solidity: {
