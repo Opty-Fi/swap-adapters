@@ -22,7 +22,11 @@ import { ICurveRegistryExchange } from "./ICurveRegistryExchange.sol";
 contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
     using Address for address;
 
+    /*solhint-disable var-name-mixedcase*/
+    /** @notice address of the curve registry exchange */
     ICurveRegistryExchange public immutable CurveRegistryExchange;
+
+    /*solhint-enable var-name-mixedcase*/
 
     constructor(address _registry, ICurveRegistryExchange _curveRegistryExchange) AdapterModifiersBase(_registry) {
         CurveRegistryExchange = _curveRegistryExchange;

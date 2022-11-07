@@ -32,8 +32,10 @@ contract UniswapV2ExchangeAdapter is IAdapterV2, AdapterModifiersBase {
     /** @notice Denominator for basis points calculations */
     uint256 public constant DENOMINATOR = 10000;
 
+    /*solhint-disable var-name-mixedcase*/
     /** @notice  address of uniswapb2 router */
     IUniswapV2Router02 public immutable UniswapV2Router;
+    /*solhint-enable var-name-mixedcase*/
 
     /** @notice  address of the optyfi oracle */
     IOptyFiOracle public optyFiOracle;
