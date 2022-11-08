@@ -12,6 +12,8 @@ import { Address } from "@openzeppelin/contracts-0.8.x/utils/Address.sol";
 // interfaces
 import { IAdapterV2 } from "@optyfi/defi-legos/interfaces/defiAdapters/contracts/IAdapterV2.sol";
 import { ICurveRegistryExchange } from "@optyfi/defi-legos/ethereum/curve/contracts/ICurveRegistryExchange.sol";
+import { ICurveMetaRegistry } from "@optyfi/defi-legos/ethereum/curve/contracts/ICurveMetaRegistry.sol";
+import { ICurveSwapV1 } from "@optyfi/defi-legos/ethereum/curve/contracts/ICurveSwapV1.sol";
 
 /**
  * @title Adapter for Curve Registry Exchange
@@ -26,10 +28,28 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
     /** @notice address of the curve registry exchange */
     ICurveRegistryExchange public immutable CurveRegistryExchange;
 
+    /** @notice Curve Meta Registry */
+    ICurveMetaRegistry public immutable META_REGISTRY;
+
+    /** @notice address of wrapped network token */
+    address public immutable WrappedNetworkToken;
+
+    /** @notice  Curve Registry Address Provider */
+    address public immutable ETH;
+
     /*solhint-enable var-name-mixedcase*/
 
-    constructor(address _registry, ICurveRegistryExchange _curveRegistryExchange) AdapterModifiersBase(_registry) {
+    constructor(
+        address _registry,
+        ICurveRegistryExchange _curveRegistryExchange,
+        ICurveMetaRegistry _metaRegistry,
+        address _wrappedNetworkToken,
+        address _eth
+    ) AdapterModifiersBase(_registry) {
         CurveRegistryExchange = _curveRegistryExchange;
+        META_REGISTRY = _metaRegistry;
+        WrappedNetworkToken = _wrappedNetworkToken;
+        ETH = _eth;
     }
 
     /**
@@ -41,21 +61,37 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
         address _liquidityPool,
         address _outputToken,
         uint256 _amount
-    ) public view override returns (bytes[] memory) {
-        bytes[] memory _codes = new bytes[](1);
-        _codes[0] = abi.encode(
-            address(CurveRegistryExchange),
-            abi.encodeWithSignature(
-                "exchange(address,address,address,uint256,uint256,address)",
-                _liquidityPool,
-                _inputToken,
-                _outputToken,
-                _amount,
-                CurveRegistryExchange.get_exchange_amount(_liquidityPool, _inputToken, _outputToken, _amount),
-                _vault
-            )
-        );
-        return _codes;
+    ) public view override returns (bytes[] memory _codes) {
+        if (_amount > 0) {
+            _codes = new bytes[](1);
+            if (_getLpToken(_liquidityPool) == _inputToken) {
+                int128 _tokenIndex = _getTokenIndex(_liquidityPool, _outputToken);
+                _codes[0] = abi.encode(
+                    _liquidityPool,
+                    abi.encodeCall(
+                        ICurveSwapV1(_liquidityPool).remove_liquidity_one_coin,
+                        (
+                            _amount,
+                            _tokenIndex,
+                            (_calcWithdrawOneCoin(_liquidityPool, _amount, _tokenIndex) * 9500) / 10000
+                        )
+                    )
+                );
+            } else {
+                _codes[0] = abi.encode(
+                    address(CurveRegistryExchange),
+                    abi.encodeWithSignature(
+                        "exchange(address,address,address,uint256,uint256,address)",
+                        _liquidityPool,
+                        _inputToken,
+                        _outputToken,
+                        _amount,
+                        CurveRegistryExchange.get_exchange_amount(_liquidityPool, _inputToken, _outputToken, _amount),
+                        _vault
+                    )
+                );
+            }
+        }
     }
 
     /**
@@ -86,21 +122,26 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
         address _liquidityPool,
         address _outputToken,
         uint256 _amount
-    ) public view override returns (bytes[] memory) {
-        bytes[] memory _codes = new bytes[](1);
-        _codes[0] = abi.encode(
-            address(CurveRegistryExchange),
-            abi.encodeWithSignature(
-                "exchange(address,address,address,uint256,uint256,address)",
-                _liquidityPool,
-                _outputToken,
-                _inputToken,
-                _amount,
-                CurveRegistryExchange.get_exchange_amount(_liquidityPool, _outputToken, _inputToken, _amount),
-                _vault
-            )
-        );
-        return _codes;
+    ) public view override returns (bytes[] memory _codes) {
+        if (_amount > 0) {
+            _codes = new bytes[](1);
+            if (_getLpToken(_liquidityPool) == _inputToken) {
+                // add liquidity
+            } else {
+                _codes[0] = abi.encode(
+                    address(CurveRegistryExchange),
+                    abi.encodeWithSignature(
+                        "exchange(address,address,address,uint256,uint256,address)",
+                        _liquidityPool,
+                        _outputToken,
+                        _inputToken,
+                        _amount,
+                        CurveRegistryExchange.get_exchange_amount(_liquidityPool, _outputToken, _inputToken, _amount),
+                        _vault
+                    )
+                );
+            }
+        }
     }
 
     /**
@@ -176,5 +217,48 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
         uint256 _inputTokenAmount
     ) external view override returns (uint256) {
         return CurveRegistryExchange.get_input_amount(_liquidityPool, _outputToken, _inputToken, _inputTokenAmount);
+    }
+
+    function _getLpToken(address _liquidityPool) internal view returns (address) {
+        return META_REGISTRY.get_lp_token(_liquidityPool);
+    }
+
+    /**
+     * @dev This functions returns the token index for a underlying token
+     * @param _underlyingToken address of the underlying asset
+     * @param _swapPool swap pool address
+     * @return _tokenIndex index of coin in swap pool
+     */
+    function _getTokenIndex(address _swapPool, address _underlyingToken) internal view returns (int128) {
+        address _inputToken = _underlyingToken == WrappedNetworkToken ? ETH : _underlyingToken;
+        address[8] memory _underlyingTokens = _getUnderlyingTokens(_swapPool);
+        for (uint256 _i; _i < 8; _i++) {
+            if (_underlyingTokens[_i] == _inputToken) {
+                return int128(int256(_i));
+            }
+        }
+        return int128(0);
+    }
+
+    /**
+     * @dev Get the underlying tokens within a swap pool.
+     *      Note: For pools using lending, these are the
+     *            wrapped coin addresses
+     * @param _swapPool the swap pool address
+     * @return list of coin addresses
+     */
+    function _getUnderlyingTokens(address _swapPool) internal view returns (address[8] memory) {
+        return META_REGISTRY.get_underlying_coins(_swapPool);
+    }
+
+    function _calcWithdrawOneCoin(
+        address _swapPool,
+        uint256 _liquidityPoolTokenAmount,
+        int128 _tokenIndex
+    ) internal view returns (uint256) {
+        if (_liquidityPoolTokenAmount > 0) {
+            return ICurveSwapV1(_swapPool).calc_withdraw_one_coin(_liquidityPoolTokenAmount, _tokenIndex);
+        }
+        return 0;
     }
 }
