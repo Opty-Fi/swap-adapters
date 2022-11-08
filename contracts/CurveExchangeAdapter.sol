@@ -10,8 +10,8 @@ import { ERC20 } from "@openzeppelin/contracts-0.8.x/token/ERC20/ERC20.sol";
 import { Address } from "@openzeppelin/contracts-0.8.x/utils/Address.sol";
 
 // interfaces
-import { IAdapterV2 } from "./IAdapterV2.sol";
-import { ICurveRegistryExchange } from "./ICurveRegistryExchange.sol";
+import { IAdapterV2 } from "@optyfi/defi-legos/interfaces/defiAdapters/contracts/IAdapterV2.sol";
+import { ICurveRegistryExchange } from "@optyfi/defi-legos/ethereum/curve/contracts/ICurveRegistryExchange.sol";
 
 /**
  * @title Adapter for Curve Registry Exchange
