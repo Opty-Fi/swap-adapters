@@ -19,10 +19,16 @@ contract TestDeFiAdapter is MultiCall {
     function testGetDepositAllCodes(
         address _underlyingToken,
         address _liquidityPool,
-        address _adapter
+        address _adapter,
+        address _outputToken
     ) external {
         executeCodes(
-            IAdapterFull(_adapter).getDepositAllCodes(payable(address(this)), _underlyingToken, _liquidityPool),
+            IAdapterFull(_adapter).getDepositAllCodes(
+                payable(address(this)),
+                _underlyingToken,
+                _liquidityPool,
+                _outputToken
+            ),
             "depositAll"
         );
     }
@@ -31,13 +37,15 @@ contract TestDeFiAdapter is MultiCall {
         address _underlyingToken,
         address _liquidityPool,
         address _adapter,
-        uint256 _amount
+        uint256 _amount,
+        address _outputToken
     ) external {
         executeCodes(
             IAdapterFull(_adapter).getDepositSomeCodes(
                 payable(address(this)),
                 _underlyingToken,
                 _liquidityPool,
+                _outputToken,
                 _amount
             ),
             "depositSome"
@@ -47,10 +55,16 @@ contract TestDeFiAdapter is MultiCall {
     function testGetWithdrawAllCodes(
         address _underlyingToken,
         address _liquidityPool,
-        address _adapter
+        address _adapter,
+        address _outputToken
     ) external {
         executeCodes(
-            IAdapterFull(_adapter).getWithdrawAllCodes(payable(address(this)), _underlyingToken, _liquidityPool),
+            IAdapterFull(_adapter).getWithdrawAllCodes(
+                payable(address(this)),
+                _underlyingToken,
+                _liquidityPool,
+                _outputToken
+            ),
             "withdrawAll"
         );
     }
@@ -59,13 +73,15 @@ contract TestDeFiAdapter is MultiCall {
         address _underlyingToken,
         address _liquidityPool,
         address _adapter,
-        uint256 _amount
+        uint256 _amount,
+        address _outputToken
     ) external {
         executeCodes(
             IAdapterFull(_adapter).getWithdrawSomeCodes(
                 payable(address(this)),
                 _underlyingToken,
                 _liquidityPool,
+                _outputToken,
                 _amount
             ),
             "withdrawSome"

@@ -1,8 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Fixture, MockContract } from "ethereum-waffle";
 import { Artifact } from "hardhat/types";
-import { TestDeFiAdapter } from "../typechain";
-import { UniswapV2PoolAdapter } from "../typechain/UniswapV2PoolAdapter";
+import { CurveExchangeAdapter, TestDeFiAdapter, UniswapV2ExchangeAdapter } from "../typechain";
 
 export interface Signers {
   admin: SignerWithAddress;
@@ -34,9 +33,11 @@ export interface LiquidityPool {
 
 declare module "mocha" {
   export interface Context {
-    uniswapV2PoolAdapter: UniswapV2PoolAdapter;
+    uniswapV2ExchangeAdapter: UniswapV2ExchangeAdapter;
+    testDeFiAdapterForUniswapV2Exchange: TestDeFiAdapter;
+    curveExchangeAdapter: CurveExchangeAdapter;
+    testDeFiAdapterForCurveExchange: TestDeFiAdapter;
     testDeFiAdapterArtifact: Artifact;
-    testDeFiAdapterForUniswapV2Pool: TestDeFiAdapter;
     mockRegistry: MockContract;
     loadFixture: <T>(fixture: Fixture<T>) => Promise<T>;
     signers: Signers;

@@ -11,22 +11,22 @@ const FORK_BLOCK_NUMBER = process.env.FORK_BLOCK_NUMBER ? parseInt(process.env.F
 
 export const NETWORKS_RPC_URL: iParamsPerNetwork<string> = {
   [ePolygonNetwork.polygon]: POLYGON_RPC_URL,
-  [eEthereumNetwork.main]: MAIN_RPC_URL,
+  [eEthereumNetwork.mainnet]: MAIN_RPC_URL,
 };
 
 export const NETWORKS_DEFAULT_GAS: iParamsPerNetwork<number | "auto"> = {
   [ePolygonNetwork.polygon]: "auto",
-  [eEthereumNetwork.main]: "auto",
+  [eEthereumNetwork.mainnet]: "auto",
 };
 
 export const NETWORKS_CHAIN_ID: iParamsPerNetwork<number | "auto"> = {
   [ePolygonNetwork.polygon]: 137,
-  [eEthereumNetwork.main]: 1,
+  [eEthereumNetwork.mainnet]: 1,
 };
 
 export const BLOCK_TO_FORK = {
   [ePolygonNetwork.polygon]: 23858545,
-  [eEthereumNetwork.main]: 15801206,
+  [eEthereumNetwork.mainnet]: 15801206,
 };
 
 export const buildForkConfig = (fork: eNetwork): HardhatNetworkForkingUserConfig | undefined => {

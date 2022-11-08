@@ -33,7 +33,7 @@ const getCommonNetworkConfig = (networkName: eNetwork): NetworkUserConfig | unde
 const config: HardhatUserConfig = {
   networks: {
     polygon: getCommonNetworkConfig(ePolygonNetwork.polygon),
-    mainnet: getCommonNetworkConfig(eEthereumNetwork.main),
+    mainnet: getCommonNetworkConfig(eEthereumNetwork.mainnet),
     hardhat: {
       gasPrice: NETWORKS_DEFAULT_GAS[NETWORK as eNetwork],
       chainId: NETWORKS_CHAIN_ID[NETWORK as eNetwork] as number,

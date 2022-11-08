@@ -1,13 +1,16 @@
 import hre from "hardhat";
 import { Artifact } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import CurveExports from "@optyfi/defi-legos/ethereum/curve/index";
 
 // behaviour test files
-import { shouldBehaveLikeUniswapPoolAdapter } from "./UniswapV2PoolAdapter.behaviour";
+import { shouldBehaveLikeCurveExchangeAdapter } from "./CurveExchangeAdapter.behaviour";
 
 // types
-import { TestDeFiAdapter } from "../typechain";
-import { UniswapV2PoolAdapter } from "../typechain/UniswapV2PoolAdapter";
+import { Signers } from "./types";
+import { CurveExchangeAdapter, TestDeFiAdapter } from "../typechain";
+
+const testSwapPools = ["dai_3crv", "usdc_3crv", "usdt_3crv"];
 
 describe("Swap Adapters", function () {
   before(async function () {
@@ -23,18 +26,26 @@ describe("Swap Adapters", function () {
     await this.mockRegistry.mock.getRiskOperator.returns(this.signers.riskOperator.address);
     this.testDeFiAdapterArtifact = await hre.artifacts.readArtifact("TestDeFiAdapter");
   });
-  describe.only("UniswapV2ExchangeAdapter", function () {
+  describe("CurveExchangeAdapter", function () {
     before(async function () {
-      const uniswapV2PoolAdapterArtifact: Artifact = await hre.artifacts.readArtifact("UniswapV2PoolAdapter");
-      this.uniswapV2PoolAdapter = <UniswapV2PoolAdapter>(
-        await hre.waffle.deployContract(this.signers.deployer, uniswapV2PoolAdapterArtifact, [
+      const curveExchangeAdapterArtifact: Artifact = await hre.artifacts.readArtifact("CurveExchangeAdapter");
+      this.curveExchangeAdapter = <CurveExchangeAdapter>(
+        await hre.waffle.deployContract(this.signers.deployer, curveExchangeAdapterArtifact, [
           this.mockRegistry.address,
+          CurveExports.CurveRegistryExchange.address,
         ])
       );
-      this.testDeFiAdapterForUniswapV2Pool = <TestDeFiAdapter>(
+      this.testDeFiAdapterForCurveExchange = <TestDeFiAdapter>(
         await hre.waffle.deployContract(this.signers.deployer, this.testDeFiAdapterArtifact)
       );
     });
-    shouldBehaveLikeUniswapPoolAdapter();
+
+    for (const poolName of Object.keys(CurveExports.CurveSwapPool)) {
+      if (testSwapPools.includes(poolName)) {
+        shouldBehaveLikeCurveExchangeAdapter(
+          CurveExports.CurveSwapPool[poolName as keyof typeof CurveExports.CurveSwapPool],
+        );
+      }
+    }
   });
 });
