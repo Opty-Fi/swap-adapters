@@ -9,7 +9,14 @@ import { shouldBehaveLikeCurveExchangeAdapter } from "./CurveExchangeAdapter.beh
 
 // types
 import { Signers } from "./types";
-import { CurveExchangeAdapter, TestDeFiAdapter } from "../typechain";
+import {
+  CurveExchangeAdapter,
+  ICurveMetaRegistry,
+  ICurveMetaRegistry__factory,
+  ICurveRegistryExchange,
+  ICurveRegistryExchange__factory,
+  TestDeFiAdapter,
+} from "../typechain";
 
 const testSwapPoolsA = [
   "dai_3crv",
@@ -43,6 +50,12 @@ describe("Swap Adapters", function () {
     await this.mockRegistry.mock.getOperator.returns(this.signers.operator.address);
     await this.mockRegistry.mock.getRiskOperator.returns(this.signers.riskOperator.address);
     this.testDeFiAdapterArtifact = await artifacts.readArtifact("TestDeFiAdapter");
+    this.curveMetaRegistry = <ICurveMetaRegistry>(
+      await ethers.getContractAt(ICurveMetaRegistry__factory.abi, CurveExports.CurveMetaRegistry.address)
+    );
+    this.curveRegistryExchange = <ICurveRegistryExchange>(
+      await ethers.getContractAt(ICurveRegistryExchange__factory.abi, CurveExports.CurveRegistryExchange.address)
+    );
   });
   describe("CurveExchangeAdapter", async function () {
     before(async function () {

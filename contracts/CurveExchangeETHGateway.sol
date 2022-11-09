@@ -55,6 +55,20 @@ contract CurveExchangeETHGateway is IETHGateway, AdapterModifiersBase {
         ethPools[address(_curveRegistryExchange)] = true;
     }
 
+    function setEthPools(address[] memory _pools) external onlyOperator {
+        uint256 _len = _pools.length;
+        for (uint256 _i; _i < _len; _i++) {
+            ethPools[_pools[_i]] = true;
+        }
+    }
+
+    function unsetEthPools(address[] memory _pools) external onlyOperator {
+        uint256 _len = _pools.length;
+        for (uint256 _i; _i < _len; _i++) {
+            ethPools[_pools[_i]] = false;
+        }
+    }
+
     /**
      * @inheritdoc IETHGateway
      */

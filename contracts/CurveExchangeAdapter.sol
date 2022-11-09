@@ -17,8 +17,6 @@ import { ICurveMetaRegistry } from "@optyfi/defi-legos/ethereum/curve/contracts/
 import { ICurveSwapV1 } from "@optyfi/defi-legos/ethereum/curve/contracts/ICurveSwapV1.sol";
 import { ICurveSwap } from "@optyfi/defi-legos/ethereum/curve/contracts/interfacesV0/ICurveSwap.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Adapter for Curve Registry Exchange
  * @author Opty.fi

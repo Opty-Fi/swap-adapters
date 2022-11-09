@@ -1,7 +1,13 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Fixture, MockContract } from "ethereum-waffle";
 import { Artifact } from "hardhat/types";
-import { CurveExchangeAdapter, TestDeFiAdapter, UniswapV2ExchangeAdapter } from "../typechain";
+import {
+  CurveExchangeAdapter,
+  ICurveMetaRegistry,
+  ICurveRegistryExchange,
+  TestDeFiAdapter,
+  UniswapV2ExchangeAdapter,
+} from "../typechain";
 
 export interface Signers {
   admin: SignerWithAddress;
@@ -38,6 +44,8 @@ declare module "mocha" {
     curveExchangeAdapter: CurveExchangeAdapter;
     testDeFiAdapterForCurveExchange: TestDeFiAdapter;
     testDeFiAdapterArtifact: Artifact;
+    curveMetaRegistry: ICurveMetaRegistry;
+    curveRegistryExchange: ICurveRegistryExchange;
     mockRegistry: MockContract;
     loadFixture: <T>(fixture: Fixture<T>) => Promise<T>;
     signers: Signers;
