@@ -19,4 +19,10 @@ interface IAdapterRegistryBase {
      * @return Returns the Operator address
      */
     function getOperator() external view returns (address);
+
+    /**
+     * @notice Retrieve the Strategy Operator address
+     * @return Returns the Strategy Operator address
+     */
+    function getStrategyOperator() external view returns (address);
 }

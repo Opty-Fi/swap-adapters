@@ -2,15 +2,26 @@ import { artifacts, ethers, waffle } from "hardhat";
 import { Artifact } from "hardhat/types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import CurveExports from "@optyfi/defi-legos/ethereum/curve/index";
+import EthereumTokens from "@optyfi/defi-legos/ethereum/tokens/index";
 
 // behaviour test files
 import { shouldBehaveLikeCurveExchangeAdapter } from "./CurveExchangeAdapter.behaviour";
 
 // types
 import { Signers } from "./types";
-import { CurveExchangeAdapter, ERC20, ERC20__factory, TestDeFiAdapter } from "../typechain";
+import { CurveExchangeAdapter, TestDeFiAdapter } from "../typechain";
 
-const testSwapPools = ["dai+usdc+usdt_3crv"];
+const testSwapPoolsA = [
+  "dai_3crv",
+  "usdc_3crv",
+  "usdt_3crv",
+  "slink_link+slink",
+  "eth_eth+seth",
+  "seth_eth+seth",
+  "eth_eth+steth",
+  "steth_eth+steth",
+];
+const testSwapPoolsB = ["dai+usdc+usdt_3crv", "wbtc+renbtc_crvRenWBTC", "eth+seth", "link+slink"];
 
 describe("Swap Adapters", function () {
   before(async function () {
@@ -33,6 +44,13 @@ describe("Swap Adapters", function () {
         await waffle.deployContract(this.signers.deployer, curveExchangeAdapterArtifact, [
           this.mockRegistry.address,
           CurveExports.CurveRegistryExchange.address,
+          CurveExports.CurveMetaRegistry.address,
+          EthereumTokens.WRAPPED_TOKENS.WETH,
+          EthereumTokens.PLAIN_TOKENS.ETH,
+          CurveExports.CurveSwapPool["seth_eth+seth"].pool,
+          CurveExports.CurveSwapPool["aethc_eth+aethc"].pool,
+          CurveExports.CurveSwapPool["reth_eth+reth"].pool,
+          CurveExports.CurveSwapPool["steth_eth+steth"].pool,
         ])
       );
       this.testDeFiAdapterForCurveExchange = <TestDeFiAdapter>(
@@ -41,11 +59,30 @@ describe("Swap Adapters", function () {
     });
 
     for (const poolName of Object.keys(CurveExports.CurveSwapPool)) {
-      if (testSwapPools.includes(poolName)) {
+      if (testSwapPoolsA.includes(poolName)) {
         shouldBehaveLikeCurveExchangeAdapter(
           CurveExports.CurveSwapPool[poolName as keyof typeof CurveExports.CurveSwapPool],
           poolName,
+          CurveExports.CurveSwapPool[poolName as keyof typeof CurveExports.CurveSwapPool].lpToken,
+          CurveExports.CurveSwapPool[poolName as keyof typeof CurveExports.CurveSwapPool].tokens[0],
         );
+      }
+    }
+    for (const poolName of Object.keys(CurveExports.CurveSwapPool)) {
+      if (testSwapPoolsB.includes(poolName)) {
+        for (const tokenO of CurveExports.CurveSwapPool[poolName as keyof typeof CurveExports.CurveSwapPool].tokens) {
+          for (const tokenI of CurveExports.CurveSwapPool[poolName as keyof typeof CurveExports.CurveSwapPool].tokens) {
+            if (tokenI == tokenO) {
+              continue;
+            }
+            shouldBehaveLikeCurveExchangeAdapter(
+              CurveExports.CurveSwapPool[poolName as keyof typeof CurveExports.CurveSwapPool],
+              poolName,
+              tokenI,
+              tokenO,
+            );
+          }
+        }
       }
     }
   });
