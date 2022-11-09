@@ -6,6 +6,7 @@ import {
   CurveExchangeETHGateway,
   ICurveMetaRegistry,
   ICurveRegistryExchange,
+  OptyFiOracle,
   TestDeFiAdapter,
   UniswapV2ExchangeAdapter,
 } from "../typechain";
@@ -48,6 +49,8 @@ declare module "mocha" {
     testDeFiAdapterArtifact: Artifact;
     curveMetaRegistry: ICurveMetaRegistry;
     curveRegistryExchange: ICurveRegistryExchange;
+    optyFiOracleArtifact: Artifact;
+    optyFiOracle: OptyFiOracle;
     mockRegistry: MockContract;
     loadFixture: <T>(fixture: Fixture<T>) => Promise<T>;
     signers: Signers;
