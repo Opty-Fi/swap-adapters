@@ -45,6 +45,7 @@ const config: HardhatUserConfig = {
         accountsBalance: "10000000000000000000000",
       },
       forking: buildForkConfig(FORK as eNetwork),
+      hardfork: "merge",
     },
   },
   solidity: {

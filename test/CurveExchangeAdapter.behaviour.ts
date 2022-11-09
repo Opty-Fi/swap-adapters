@@ -10,6 +10,7 @@ import { ERC20, ERC20__factory } from "../typechain";
 const USDT_WHALE = "0x5041ed759Dd4aFc3a72b8192C143F72f4724081A";
 const sLINK_WHALE = "0x45899a8104CDa54deaBaDDA505f0bBA68223F631";
 const SETH_WHALE = "0xAB8ABcA00E36b396Aa3b9D9A5796d0e18AF583Ae";
+const DAI_WHALE = "0xF977814e90dA44bFA03b6295A0616a897441aceC";
 
 export function shouldBehaveLikeCurveExchangeAdapter(
   poolItem: PoolItem,
@@ -100,21 +101,31 @@ export function shouldBehaveLikeCurveExchangeAdapter(
         .connect(whaleSigner)
         .transfer(this.testDeFiAdapterForCurveExchange.address, parseUnits("20", await inputTokenInstance.decimals()));
       await tx.wait(1);
+    } else if (getAddress(inputTokenInstance.address) == getAddress(EthereumTokens.PLAIN_TOKENS.DAI)) {
+      await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [DAI_WHALE],
+      });
+      const whaleSigner = await ethers.getSigner(DAI_WHALE);
+      tx = await inputTokenInstance
+        .connect(whaleSigner)
+        .transfer(this.testDeFiAdapterForCurveExchange.address, parseUnits("20", await inputTokenInstance.decimals()));
+      await tx.wait(1);
     } else {
       await setTokenBalanceInStorage(inputTokenInstance, this.testDeFiAdapterForCurveExchange.address, "20");
     }
     // 1. deposit all underlying tokens
-    console.log(
-      `Expected ${outputTokenSymbol}`,
-      (
-        await this.curveExchangeAdapter.calculateAmountInLPToken(
-          inputTokenInstance.address,
-          poolItem.pool,
-          outputTokenInstance.address,
-          await inputTokenInstance.balanceOf(this.testDeFiAdapterForCurveExchange.address),
-        )
-      ).toString(),
-    );
+    // console.log(
+    //   `Expected ${outputTokenSymbol}`,
+    //   (
+    //     await this.curveExchangeAdapter.calculateAmountInLPToken(
+    //       inputTokenInstance.address,
+    //       poolItem.pool,
+    //       outputTokenInstance.address,
+    //       await inputTokenInstance.balanceOf(this.testDeFiAdapterForCurveExchange.address),
+    //     )
+    //   ).toString(),
+    // );
     tx = await this.testDeFiAdapterForCurveExchange.testGetDepositAllCodes(
       inputTokenInstance.address,
       poolItem.pool,
@@ -128,17 +139,17 @@ export function shouldBehaveLikeCurveExchangeAdapter(
     );
 
     // 2. withdraw all underlying tokens
-    console.log(
-      `Expected ${inputTokenSymbol}`,
-      (
-        await this.curveExchangeAdapter.getSomeAmountInToken(
-          inputTokenInstance.address,
-          poolItem.pool,
-          outputTokenInstance.address,
-          await outputTokenInstance.balanceOf(this.testDeFiAdapterForCurveExchange.address),
-        )
-      ).toString(),
-    );
+    // console.log(
+    //   `Expected ${inputTokenSymbol}`,
+    //   (
+    //     await this.curveExchangeAdapter.getSomeAmountInToken(
+    //       inputTokenInstance.address,
+    //       poolItem.pool,
+    //       outputTokenInstance.address,
+    //       await outputTokenInstance.balanceOf(this.testDeFiAdapterForCurveExchange.address),
+    //     )
+    //   ).toString(),
+    // );
     tx = await this.testDeFiAdapterForCurveExchange.testGetWithdrawAllCodes(
       inputTokenInstance.address,
       poolItem.pool,
@@ -146,9 +157,9 @@ export function shouldBehaveLikeCurveExchangeAdapter(
       outputTokenInstance.address,
     );
     await tx.wait(1);
-    console.log(
-      `Actual ${inputTokenSymbol} `,
-      (await inputTokenInstance.balanceOf(this.testDeFiAdapterForCurveExchange.address)).toString(),
-    );
+    // console.log(
+    //   `Actual ${inputTokenSymbol} `,
+    //   (await inputTokenInstance.balanceOf(this.testDeFiAdapterForCurveExchange.address)).toString(),
+    // );
   });
 }
