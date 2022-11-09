@@ -344,6 +344,17 @@ export function shouldBehaveLikeCurveExchangeAdapter(
   });
 }
 
+export function shouldInitializeVariablesLikeCurveExchangeAdapter(): void {
+  it("assert constructor logic", async function () {
+    expect(await this.curveExchangeAdapter.registryContract()).to.eq(this.mockRegistry.address);
+    expect(await this.curveExchangeAdapter.CurveRegistryExchange()).to.eq(CurveExports.CurveRegistryExchange.address);
+    expect(await this.curveExchangeAdapter.META_REGISTRY()).to.eq(CurveExports.CurveMetaRegistry.address);
+    expect(await this.curveExchangeAdapter.WrappedNetworkToken()).to.eq(EthereumTokens.WRAPPED_TOKENS.WETH);
+    expect(await this.curveExchangeAdapter.ETH()).to.eq(EthereumTokens.PLAIN_TOKENS.ETH);
+    expect(await this.curveExchangeAdapter.curveExchangeETHGatewayContract()).to.be.properAddress;
+  });
+}
+
 async function getCalculatedAmountInLpToken(
   curveMetaRegistryInstance: ICurveMetaRegistry,
   curveRegistryExchangeInstance: ICurveRegistryExchange,

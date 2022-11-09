@@ -3,6 +3,7 @@ import { Fixture, MockContract } from "ethereum-waffle";
 import { Artifact } from "hardhat/types";
 import {
   CurveExchangeAdapter,
+  CurveExchangeETHGateway,
   ICurveMetaRegistry,
   ICurveRegistryExchange,
   TestDeFiAdapter,
@@ -42,6 +43,7 @@ declare module "mocha" {
     uniswapV2ExchangeAdapter: UniswapV2ExchangeAdapter;
     testDeFiAdapterForUniswapV2Exchange: TestDeFiAdapter;
     curveExchangeAdapter: CurveExchangeAdapter;
+    curveExchangeETHGateway: CurveExchangeETHGateway;
     testDeFiAdapterForCurveExchange: TestDeFiAdapter;
     testDeFiAdapterArtifact: Artifact;
     curveMetaRegistry: ICurveMetaRegistry;
