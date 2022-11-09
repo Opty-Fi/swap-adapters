@@ -1,14 +1,19 @@
 // SPDX-License-Identifier:MIT
 pragma solidity =0.8.11;
 
+// library
+import { SafeERC20 } from "@openzeppelin/contracts-0.8.x/token/ERC20/utils/SafeERC20.sol";
+
 //  helper contracts
 import { AdapterModifiersBase } from "./utils/AdapterModifiersBase.sol";
+import { ERC20 } from "@openzeppelin/contracts-0.8.x/token/ERC20/ERC20.sol";
 
 //  interfaces
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IWETH } from "@optyfi/defi-legos/interfaces/misc/contracts/IWETH.sol";
 import { IETHGateway } from "@optyfi/defi-legos/interfaces/misc/contracts/IETHGateway.sol";
 import { ICurveETHSwapV1 as ICurveETHSwap } from "@optyfi/defi-legos/ethereum/curve/contracts/ICurveETHSwapV1.sol";
+import { ICurveRegistryExchange } from "@optyfi/defi-legos/ethereum/curve/contracts/ICurveRegistryExchange.sol";
 
 /**
  * @title ETH gateway for opty-fi's Curve Exchange adapter
@@ -16,27 +21,38 @@ import { ICurveETHSwapV1 as ICurveETHSwap } from "@optyfi/defi-legos/ethereum/cu
  * @dev Inspired from Aave WETH gateway
  */
 contract CurveExchangeETHGateway is IETHGateway, AdapterModifiersBase {
-    // solhint-disable-next-line var-name-mixedcase
+    using SafeERC20 for ERC20;
+
+    /* solhint-disable var-name-mixedcase*/
     IWETH internal immutable WETH;
 
-    // solhint-disable-next-line var-name-mixedcase
+    /** @notice address of the curve registry exchange */
+    ICurveRegistryExchange public immutable CurveRegistryExchange;
+
+    /** @notice address of the curve registry exchange */
     mapping(address => bool) public ethPools;
+
+    /*solhint-enable var-name-mixedcase*/
 
     /**
      * @dev Initializes the WETH address, registry and curve's Eth pools
      * @param _weth Address of the Wrapped Ether contract
      * @param _registry Address of the registry
+     * @param _curveRegistryExchange n
      * @param _ethPools Array of Curve's Eth pools
      **/
     constructor(
         address _weth,
         address _registry,
+        ICurveRegistryExchange _curveRegistryExchange,
         address[4] memory _ethPools
     ) AdapterModifiersBase(_registry) {
         WETH = IWETH(_weth);
+        CurveRegistryExchange = _curveRegistryExchange;
         for (uint256 _i = 0; _i < _ethPools.length; _i++) {
             ethPools[_ethPools[_i]] = true;
         }
+        ethPools[address(_curveRegistryExchange)] = true;
     }
 
     /**
@@ -71,6 +87,41 @@ contract CurveExchangeETHGateway is IETHGateway, AdapterModifiersBase {
         uint256 _minAmount = (ICurveETHSwap(_liquidityPool).calc_withdraw_one_coin(_amount, _tokenIndex) * 9900) /
             (10000);
         ICurveETHSwap(_liquidityPool).remove_liquidity_one_coin(_amount, _tokenIndex, _minAmount);
+        WETH.deposit{ value: address(this).balance }();
+        IERC20(address(WETH)).transfer(_vault, IERC20(address(WETH)).balanceOf(address(this)));
+    }
+
+    function depositETHExchange(
+        address _vault,
+        address _inputToken,
+        address _liquidityPool,
+        address _outputToken,
+        uint256 _inputTokenAmount,
+        uint256 _expectedAmount
+    ) external {
+        IERC20(address(WETH)).transferFrom(_vault, address(this), _inputTokenAmount);
+        WETH.withdraw(_inputTokenAmount);
+        CurveRegistryExchange.exchange{ value: _inputTokenAmount }(
+            _liquidityPool,
+            _inputToken,
+            _outputToken,
+            _inputTokenAmount,
+            _expectedAmount,
+            _vault
+        );
+    }
+
+    function withdrawETHExchange(
+        address _vault,
+        address _inputToken,
+        address _liquidityPool,
+        address _outputToken,
+        uint256 _outputTokenAmount,
+        uint256 _expectedAmount
+    ) external {
+        IERC20(_outputToken).transferFrom(_vault, address(this), _outputTokenAmount);
+        ERC20(_outputToken).safeApprove(address(CurveRegistryExchange), _outputTokenAmount);
+        CurveRegistryExchange.exchange(_liquidityPool, _outputToken, _inputToken, _outputTokenAmount, _expectedAmount);
         WETH.deposit{ value: address(this).balance }();
         IERC20(address(WETH)).transfer(_vault, IERC20(address(WETH)).balanceOf(address(this)));
     }

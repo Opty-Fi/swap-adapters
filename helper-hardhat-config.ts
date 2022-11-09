@@ -26,7 +26,7 @@ export const NETWORKS_CHAIN_ID: iParamsPerNetwork<number | "auto"> = {
 
 export const BLOCK_TO_FORK = {
   [ePolygonNetwork.polygon]: 23858545,
-  [eEthereumNetwork.mainnet]: 15801206,
+  [eEthereumNetwork.mainnet]: 15934025,
 };
 
 export const buildForkConfig = (fork: eNetwork): HardhatNetworkForkingUserConfig | undefined => {

@@ -17,6 +17,8 @@ import { ICurveMetaRegistry } from "@optyfi/defi-legos/ethereum/curve/contracts/
 import { ICurveSwapV1 } from "@optyfi/defi-legos/ethereum/curve/contracts/ICurveSwapV1.sol";
 import { ICurveSwap } from "@optyfi/defi-legos/ethereum/curve/contracts/interfacesV0/ICurveSwap.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Adapter for Curve Registry Exchange
  * @author Opty.fi
@@ -42,8 +44,6 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
     /** @dev ETH gateway contract for curveExchange adapter */
     address public curveExchangeETHGatewayContract;
 
-    /*solhint-enable var-name-mixedcase*/
-
     constructor(
         address _registry,
         ICurveRegistryExchange _curveRegistryExchange,
@@ -63,10 +63,13 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
             new CurveExchangeETHGateway(
                 _wrappedNetworkToken,
                 _registry,
+                _curveRegistryExchange,
                 [_ETH_sETH_STABLESWAP, _ETH_ankrETH_STABLESWAP, _ETH_rETH_STABLESWAP, _ETH_stETH_STABLESWAP]
             )
         );
     }
+
+    /*solhint-enable var-name-mixedcase*/
 
     /**
      * @inheritdoc IAdapterV2
@@ -107,23 +110,52 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
                         )
                     );
             } else {
-                _codes[0] = abi.encode(
-                    address(CurveRegistryExchange),
-                    abi.encodeWithSignature(
-                        "exchange(address,address,address,uint256,uint256,address)",
-                        _liquidityPool,
-                        _inputToken,
-                        _outputToken,
-                        _inputTokenAmount,
-                        (CurveRegistryExchange.get_exchange_amount(
+                uint256 _minAmount = (CurveRegistryExchange.get_exchange_amount(
+                    _liquidityPool,
+                    _inputToken == WrappedNetworkToken ? ETH : _inputToken,
+                    _outputToken == WrappedNetworkToken ? ETH : _outputToken,
+                    _inputTokenAmount
+                ) * 9900) / 10000;
+                if (_inputToken == WrappedNetworkToken) {
+                    _codes[0] = abi.encode(
+                        curveExchangeETHGatewayContract,
+                        abi.encodeWithSignature(
+                            "depositETHExchange(address,address,address,address,uint256,uint256)",
+                            _vault,
+                            ETH,
+                            _liquidityPool,
+                            _outputToken,
+                            _inputTokenAmount,
+                            _minAmount
+                        )
+                    );
+                } else if (_outputToken == WrappedNetworkToken) {
+                    _codes[0] = abi.encode(
+                        curveExchangeETHGatewayContract,
+                        abi.encodeWithSignature(
+                            "withdrawETHExchange(address,address,address,address,uint256,uint256)",
+                            _vault,
+                            ETH,
+                            _liquidityPool,
+                            _inputToken,
+                            _inputTokenAmount,
+                            _minAmount
+                        )
+                    );
+                } else {
+                    _codes[0] = abi.encode(
+                        address(CurveRegistryExchange),
+                        abi.encodeWithSignature(
+                            "exchange(address,address,address,uint256,uint256,address)",
                             _liquidityPool,
                             _inputToken,
                             _outputToken,
-                            _inputTokenAmount
-                        ) * 9900) / 10000,
-                        _vault
-                    )
-                );
+                            _inputTokenAmount,
+                            _minAmount,
+                            _vault
+                        )
+                    );
+                }
             }
         }
     }
@@ -162,23 +194,57 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
             if (_getLpToken(_liquidityPool) == _inputToken) {
                 _codes[0] = _getDepositCode(_vault, _outputToken, _liquidityPool, _outputTokenAmount);
             } else {
-                _codes[0] = abi.encode(
-                    address(CurveRegistryExchange),
-                    abi.encodeWithSignature(
-                        "exchange(address,address,address,uint256,uint256,address)",
-                        _liquidityPool,
-                        _outputToken,
-                        _inputToken,
-                        _outputTokenAmount,
-                        (CurveRegistryExchange.get_exchange_amount(
+                uint256 _minAmount = (CurveRegistryExchange.get_exchange_amount(
+                    _liquidityPool,
+                    _outputToken == WrappedNetworkToken ? ETH : _outputToken,
+                    _inputToken == WrappedNetworkToken ? ETH : _inputToken,
+                    _outputTokenAmount
+                ) * 9900) / 10000;
+                if (_inputToken == WrappedNetworkToken) {
+                    _codes[0] = abi.encode(
+                        curveExchangeETHGatewayContract,
+                        abi.encodeWithSignature(
+                            "withdrawETHExchange(address,address,address,address,uint256,uint256)",
+                            _vault,
+                            ETH,
+                            _liquidityPool,
+                            _outputToken,
+                            _outputTokenAmount,
+                            _minAmount
+                        )
+                    );
+                } else if (_outputToken == WrappedNetworkToken) {
+                    _codes[0] = abi.encode(
+                        curveExchangeETHGatewayContract,
+                        abi.encodeWithSignature(
+                            "depositETHExchange(address,address,address,address,uint256,uint256)",
+                            _vault,
+                            ETH,
+                            _liquidityPool,
+                            _inputToken,
+                            _outputTokenAmount,
+                            _minAmount
+                        )
+                    );
+                } else {
+                    _codes[0] = abi.encode(
+                        address(CurveRegistryExchange),
+                        abi.encodeWithSignature(
+                            "exchange(address,address,address,uint256,uint256,address)",
                             _liquidityPool,
                             _outputToken,
                             _inputToken,
-                            _outputTokenAmount
-                        ) * 9900) / 10000,
-                        _vault
-                    )
-                );
+                            _outputTokenAmount,
+                            (CurveRegistryExchange.get_exchange_amount(
+                                _liquidityPool,
+                                _outputToken,
+                                _inputToken,
+                                _outputTokenAmount
+                            ) * 9900) / 10000,
+                            _vault
+                        )
+                    );
+                }
             }
         }
     }
@@ -242,9 +308,9 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
                 uint256 _nCoins = _getNCoins(_liquidityPool);
                 address[8] memory _underlyingTokens = _getUnderlyingTokens(_liquidityPool);
                 uint256[] memory _amounts = new uint256[](_nCoins);
-                _inputToken = _inputToken == WrappedNetworkToken ? ETH : _inputToken;
+                _outputToken = _outputToken == WrappedNetworkToken ? ETH : _outputToken;
                 for (uint256 _i; _i < _nCoins; _i++) {
-                    if (_underlyingTokens[_i] == _inputToken) {
+                    if (_underlyingTokens[_i] == _outputToken) {
                         _amounts[_i] = _outputTokenAmount;
                     }
                 }
@@ -263,8 +329,8 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
                 return
                     CurveRegistryExchange.get_exchange_amount(
                         _liquidityPool,
-                        _outputToken,
-                        _inputToken,
+                        _outputToken == WrappedNetworkToken ? ETH : _outputToken,
+                        _inputToken == WrappedNetworkToken ? ETH : _inputToken,
                         _outputTokenAmount
                     );
             }
@@ -282,7 +348,7 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
         uint256 _inputTokenAmount
     ) external view override returns (uint256) {
         if (_inputTokenAmount > 0) {
-            if (_getLpToken(_liquidityPool) == _outputToken) {
+            if (_getLpToken(_liquidityPool) == _inputToken) {
                 return
                     ICurveSwap(_liquidityPool).calc_withdraw_one_coin(
                         _inputTokenAmount,
@@ -290,10 +356,10 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
                     );
             } else {
                 return
-                    CurveRegistryExchange.get_input_amount(
+                    CurveRegistryExchange.get_exchange_amount(
                         _liquidityPool,
-                        _outputToken,
-                        _inputToken,
+                        _inputToken == WrappedNetworkToken ? ETH : _inputToken,
+                        _outputToken == WrappedNetworkToken ? ETH : _outputToken,
                         _inputTokenAmount
                     );
             }

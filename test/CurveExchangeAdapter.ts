@@ -21,7 +21,14 @@ const testSwapPoolsA = [
   "eth_eth+steth",
   "steth_eth+steth",
 ];
-const testSwapPoolsB = ["dai+usdc+usdt_3crv", "wbtc+renbtc_crvRenWBTC", "eth+seth", "link+slink"];
+const testSwapPoolsB = [
+  "dai+usdc+usdt_3crv",
+  "wbtc+renbtc_crvRenWBTC",
+  "link+slink",
+  "eth+steth",
+  "eth+seth",
+  "eth+reth",
+];
 
 describe("Swap Adapters", function () {
   before(async function () {
