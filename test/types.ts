@@ -41,7 +41,10 @@ export interface LiquidityPool {
 
 declare module "mocha" {
   export interface Context {
-    uniswapV2ExchangeAdapter: UniswapV2ExchangeAdapter;
+    uniswapV2ExchangeAdapterEthereum: UniswapV2ExchangeAdapter;
+    sushiswapExchangeAdapterEthereum: UniswapV2ExchangeAdapter;
+    sushiswapExchangeAdapterPolygon: UniswapV2ExchangeAdapter;
+    quickswapExchangeAdapterPolygon: UniswapV2ExchangeAdapter;
     testDeFiAdapterForUniswapV2Exchange: TestDeFiAdapter;
     curveExchangeAdapter: CurveExchangeAdapter;
     curveExchangeETHGateway: CurveExchangeETHGateway;

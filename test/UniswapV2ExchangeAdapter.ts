@@ -2,84 +2,178 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { artifacts, ethers, waffle } from "hardhat";
 import { Artifact } from "hardhat/types";
 import EthereumTokens from "@optyfi/defi-legos/ethereum/tokens/index";
-import { eEthereumNetwork } from "../helpers/types";
+import PolygonTokens from "@optyfi/defi-legos/polygon/tokens/index";
+import EthereumExports from "@optyfi/defi-legos/ethereum/index";
+import PolygonSushiswapExports from "@optyfi/defi-legos/polygon/sushiswap/index";
+import PolygonQuickswapExports from "@optyfi/defi-legos/polygon/quickswap/index";
+import { eEthereumNetwork, ePolygonNetwork } from "../helpers/types";
 import { Signers } from "./types";
+import { OptyFiOracle, TestDeFiAdapter, UniswapV2ExchangeAdapter } from "../typechain";
+import { TokenPairPriceFeedStruct } from "../typechain/OptyFiOracle";
+import { shouldBehaveLikeUniswapV2ExchangeAdapter } from "./UniswapV2Exchange.behaviour";
 
-// uniswapv2 ethereum
-// "USDC-ETH": {
-//     pool: "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc",
-//     token0: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-//     token1: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-// },
-// "DAI-USDC": {
-//     pool: "0xAE461cA67B15dc8dc81CE7615e0320dA1A9aB8D5",
-//     token0: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-//     token1: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-// },
-// "ETH-USDT": {
-//     pool: "0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852",
-//     token0: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-//     token1: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-// },
-// "UNI-ETH": {
-//     pool: "0xd3d2E2692501A5c9Ca623199D38826e513033a17",
-//     token0: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
-//     token1: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-// },
-// "PAXG-ETH": {
-//     pool: "0x9C4Fe5FFD9A9fC5678cFBd93Aa2D4FD684b67C4C",
-//     token0: "0x45804880De22913dAFE09f4980848ECE6EcbAf78",
-//     token1: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-// },
-// "FXS-FRAX": {
-//     pool: "0xE1573B9D29e2183B1AF0e743Dc2754979A40D237",
-//     token0: "0x3432B6A60D23Ca0dFCa7761B7ab56459D9C964D0",
-//     token1: "0x853d955aCEf822Db058eb8505911ED77F175b99e",
-// },
+const uniswapV2EthereumTestPools = ["USDC-ETH", "DAI-USDC", "ETH-USDT", "UNI-ETH", "PAXG-ETH", "FXS-FRAX"];
 
-const priceFeeds = {
-  [eEthereumNetwork.mainnet]: {
-    USDC_ETH_FEED: {
-      feed: "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4",
+const sushiswapEthereumTestPools = [
+  "ILV-ETH",
+  "USDC-ETH",
+  "USDC-ETH",
+  "ETH-USDT",
+  "WBTC-ETH",
+  "SUSHI-WETH",
+  "TOKE-ETH",
+  "ALCX-WETH",
+  "DAI-ETH",
+];
+
+const sushiswapPolygonTestPools = ["MATIC-WETH", "USDC-WETH", "TUSD-USDC", "USDC-USDT"];
+
+const quickswapPolygonTestPools = [
+  "WETH-DAI",
+  "WETH-USDT",
+  "WBTC-WETH",
+  "WMATIC-WETH",
+  "USDC-miMATIC",
+  "USDC-USDT",
+  "USDC-WETH",
+  "WMATIC-USDC",
+];
+
+const priceFeeds: { [key: string]: TokenPairPriceFeedStruct[] } = {
+  [eEthereumNetwork.mainnet]: [
+    {
+      priceFeed: "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4",
       tokenA: EthereumTokens.PLAIN_TOKENS.USDC,
       tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
     },
-    DAI_USD_FEED: {
-      feed: "0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9",
+    {
+      priceFeed: "0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9",
       tokenA: EthereumTokens.PLAIN_TOKENS.DAI,
       tokenB: EthereumTokens.PLAIN_TOKENS.USD,
     },
-    USDC_USD_FEED: {
-      feed: "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6",
+    {
+      priceFeed: "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6",
       tokenA: EthereumTokens.PLAIN_TOKENS.USDC,
       tokenB: EthereumTokens.PLAIN_TOKENS.USD,
     },
-    USDT_ETH_FEED: {
-      feed: "0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46",
+    {
+      priceFeed: "0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46",
       tokenA: EthereumTokens.PLAIN_TOKENS.USDC,
       tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
     },
-    UNI_ETH_FEED: {
-      feed: "0xD6aA3D25116d8dA79Ea0246c4826EB951872e02e",
+    {
+      priceFeed: "0xD6aA3D25116d8dA79Ea0246c4826EB951872e02e",
       tokenA: EthereumTokens.REWARD_TOKENS.UNI,
       tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
     },
-    PAXG_ETH_FEED: {
-      feed: "0x9B97304EA12EFed0FAd976FBeCAad46016bf269e",
+    {
+      priceFeed: "0x9B97304EA12EFed0FAd976FBeCAad46016bf269e",
       tokenA: EthereumTokens.PLAIN_TOKENS.PAXG,
       tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
     },
-    FXS_USD_FEED: {
-      feed: "0x6Ebc52C8C1089be9eB3945C4350B68B8E4C2233f",
+    {
+      priceFeed: "0x6Ebc52C8C1089be9eB3945C4350B68B8E4C2233f",
       tokenA: EthereumTokens.PLAIN_TOKENS.FXS,
       tokenB: EthereumTokens.PLAIN_TOKENS.USD,
     },
-    FRAX_USD_FEED: {
-      feed: "0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD",
+    {
+      priceFeed: "0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD",
       tokenA: EthereumTokens.PLAIN_TOKENS.FRAX,
       tokenB: EthereumTokens.PLAIN_TOKENS.USD,
     },
-  },
+    {
+      priceFeed: "0xf600984CCa37cd562E74E3EE514289e3613ce8E4",
+      tokenA: EthereumTokens.REWARD_TOKENS.ILV,
+      tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
+    },
+    {
+      priceFeed: "0xdeb288F737066589598e9214E782fa5A8eD689e8",
+      tokenA: EthereumTokens.BTC_TOKENS.WBTC,
+      tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
+    },
+    {
+      priceFeed: "0xAc559F25B1619171CbC396a50854A3240b6A4e99",
+      tokenA: EthereumTokens.WRAPPED_TOKENS.WETH,
+      tokenB: EthereumTokens.BTC_TOKENS.WBTC,
+    },
+    {
+      priceFeed: "0xe572CeF69f43c2E488b33924AF04BDacE19079cf",
+      tokenA: EthereumTokens.REWARD_TOKENS.SUSHI,
+      tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
+    },
+    {
+      priceFeed: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",
+      tokenA: EthereumTokens.WRAPPED_TOKENS.WETH,
+      tokenB: EthereumTokens.PLAIN_TOKENS.USD,
+    },
+    {
+      priceFeed: "0x104cD02b2f22972E8d8542867a36bDeDA4f104d8",
+      tokenA: EthereumTokens.REWARD_TOKENS.TOKE,
+      tokenB: EthereumTokens.PLAIN_TOKENS.USD,
+    },
+    {
+      priceFeed: "0x194a9AaF2e0b67c35915cD01101585A33Fe25CAa",
+      tokenA: EthereumTokens.REWARD_TOKENS.ALCX,
+      tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
+    },
+    {
+      priceFeed: "0x773616E4d11A78F511299002da57A0a94577F1f4",
+      tokenA: EthereumTokens.PLAIN_TOKENS.DAI,
+      tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
+    },
+  ],
+  [ePolygonNetwork.polygon]: [
+    {
+      priceFeed: "0x327e23A4855b6F663a28c5161541d69Af8973302",
+      tokenA: PolygonTokens.WMATIC,
+      tokenB: PolygonTokens.WETH,
+    },
+    {
+      priceFeed: "0xefb7e6be8356cCc6827799B6A7348eE674A80EaE",
+      tokenA: PolygonTokens.USDC,
+      tokenB: PolygonTokens.WETH,
+    },
+    {
+      priceFeed: "0x7C5D415B64312D38c56B54358449d0a4058339d2",
+      tokenA: "0x2e1AD108fF1D8C782fcBbB89AAd783aC49586756",
+      tokenB: PolygonTokens.USD,
+    },
+    {
+      priceFeed: "0xfE4A8cc5b5B2366C1B58Bea3858e81843581b2F7",
+      tokenA: PolygonTokens.USDC,
+      tokenB: PolygonTokens.USD,
+    },
+    {
+      priceFeed: "0x0A6513e40db6EB1b165753AD52E80663aeA50545",
+      tokenA: PolygonTokens.USDT,
+      tokenB: PolygonTokens.USD,
+    },
+    {
+      priceFeed: "0xFC539A559e170f848323e19dfD66007520510085",
+      tokenA: PolygonTokens.DAI,
+      tokenB: PolygonTokens.WETH,
+    },
+    {
+      priceFeed: "0xf9d5AAC6E5572AEFa6bd64108ff86a222F69B64d",
+      tokenA: PolygonTokens.USDT,
+      tokenB: PolygonTokens.WETH,
+    },
+    {
+      priceFeed: "0xA338e0492B2F944E9F8C0653D3AD1484f2657a37",
+      tokenA: PolygonTokens.WBTC,
+      tokenB: PolygonTokens.WETH,
+    },
+    {
+      priceFeed: "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428",
+      tokenA: PolygonTokens.MIMATIC,
+      tokenB: PolygonTokens.USD,
+    },
+    {
+      priceFeed: "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
+      tokenA: PolygonTokens.WMATIC,
+      tokenB: PolygonTokens.USD,
+    },
+  ],
 };
 
 describe("Swap Adapters", function () {
@@ -95,5 +189,99 @@ describe("Swap Adapters", function () {
     await this.mockRegistry.mock.getOperator.returns(this.signers.operator.address);
     await this.mockRegistry.mock.getRiskOperator.returns(this.signers.riskOperator.address);
     this.testDeFiAdapterArtifact = await artifacts.readArtifact("TestDeFiAdapter");
+
+    const optyFiOracleArtifact: Artifact = await artifacts.readArtifact("OptyFiOracle");
+    this.optyFiOracle = <OptyFiOracle>(
+      await waffle.deployContract(this.signers.deployer, optyFiOracleArtifact, ["3600", "3600"])
+    );
+
+    if (process.env.FORK === eEthereumNetwork.mainnet) {
+      const tx = await this.optyFiOracle
+        .connect(this.signers.deployer)
+        .setChainlinkPriceFeed(priceFeeds[eEthereumNetwork.mainnet]);
+      await tx.wait(1);
+    } else if (process.env.FORK === ePolygonNetwork.polygon) {
+      const tx = await this.optyFiOracle
+        .connect(this.signers.deployer)
+        .setChainlinkPriceFeed(priceFeeds[ePolygonNetwork.polygon]);
+      await tx.wait(1);
+    }
+
+    this.testDeFiAdapterForUniswapV2Exchange = <TestDeFiAdapter>(
+      await waffle.deployContract(this.signers.deployer, this.testDeFiAdapterArtifact)
+    );
+  });
+
+  describe("UniswapV2ExchangeAdapter", async function () {
+    before(async function () {
+      const uniswapV2ExchangeAdapterArtifact = await artifacts.readArtifact("UniswapV2ExchangeAdapter");
+      if (process.env.FORK === eEthereumNetwork.mainnet) {
+        this.uniswapV2ExchangeAdapterEthereum = <UniswapV2ExchangeAdapter>(
+          await waffle.deployContract(this.signers.deployer, uniswapV2ExchangeAdapterArtifact, [
+            this.mockRegistry.address,
+            EthereumExports.legos.uniswapv2.router02.address,
+            this.optyFiOracle.address,
+          ])
+        );
+
+        this.sushiswapExchangeAdapterEthereum = <UniswapV2ExchangeAdapter>(
+          await waffle.deployContract(this.signers.deployer, uniswapV2ExchangeAdapterArtifact, [
+            this.mockRegistry.address,
+            EthereumExports.legos.sushi.SushiswapRouter.address,
+            this.optyFiOracle.address,
+          ])
+        );
+
+        for (const poolName of Object.keys(EthereumExports.legos.uniswapv2.liquidity.pools)) {
+          if (!uniswapV2EthereumTestPools.includes(poolName)) {
+            continue;
+          }
+          describe("uniswapV2ExchangeAdapterEthereum", async function () {
+            shouldBehaveLikeUniswapV2ExchangeAdapter();
+          });
+        }
+        for (const poolName of Object.keys(EthereumExports.legos.sushi.liquidity.pools)) {
+          if (!sushiswapEthereumTestPools.includes(poolName)) {
+            continue;
+          }
+          describe("sushiswapExchangeAdapterEthereum", async function () {
+            shouldBehaveLikeUniswapV2ExchangeAdapter();
+          });
+        }
+      } else if (process.env.FORK === ePolygonNetwork.polygon) {
+        this.sushiswapExchangeAdapterPolygon = <UniswapV2ExchangeAdapter>(
+          await waffle.deployContract(this.signers.deployer, uniswapV2ExchangeAdapterArtifact, [
+            this.mockRegistry.address,
+            PolygonSushiswapExports.SushiswapRouter.address,
+            this.optyFiOracle.address,
+          ])
+        );
+
+        this.quickswapExchangeAdapterPolygon = <UniswapV2ExchangeAdapter>(
+          await waffle.deployContract(this.signers.deployer, uniswapV2ExchangeAdapterArtifact, [
+            this.mockRegistry.address,
+            PolygonQuickswapExports.QuickswapRouter.address,
+            this.optyFiOracle.address,
+          ])
+        );
+
+        for (const poolName of Object.keys(PolygonSushiswapExports.liquidity.pools)) {
+          if (!sushiswapPolygonTestPools.includes(poolName)) {
+            continue;
+          }
+          describe("sushiswapExchangeAdapterPolygon", async function () {
+            shouldBehaveLikeUniswapV2ExchangeAdapter();
+          });
+        }
+        for (const poolName of Object.keys(PolygonQuickswapExports.liquidity.pools)) {
+          if (!quickswapPolygonTestPools.includes(poolName)) {
+            continue;
+          }
+          describe("quickswapExchangeAdapterPolygon", async function () {
+            shouldBehaveLikeUniswapV2ExchangeAdapter();
+          });
+        }
+      }
+    });
   });
 });
