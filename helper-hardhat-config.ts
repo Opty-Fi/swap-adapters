@@ -5,7 +5,7 @@ import { eEthereumNetwork, eNetwork, ePolygonNetwork, iParamsPerNetwork } from "
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
 
-const POLYGON_RPC_URL = process.env.MATIC_RPC_URL || "";
+const POLYGON_RPC_URL = process.env.POLYGON_NODE_URL || "";
 const MAIN_RPC_URL = process.env.MAIN_RPC_URL || "";
 const FORK_BLOCK_NUMBER = process.env.FORK_BLOCK_NUMBER ? parseInt(process.env.FORK_BLOCK_NUMBER) : 0;
 

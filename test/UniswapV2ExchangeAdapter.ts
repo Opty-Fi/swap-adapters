@@ -3,7 +3,8 @@ import { artifacts, ethers, waffle } from "hardhat";
 import { Artifact } from "hardhat/types";
 import EthereumTokens from "@optyfi/defi-legos/ethereum/tokens/index";
 import PolygonTokens from "@optyfi/defi-legos/polygon/tokens/index";
-import EthereumExports from "@optyfi/defi-legos/ethereum/index";
+import EthereumUniswapV2 from "@optyfi/defi-legos/ethereum/uniswapV2/index";
+import EthereumSushiswap from "@optyfi/defi-legos/ethereum/sushiswap/index";
 import PolygonSushiswapExports from "@optyfi/defi-legos/polygon/sushiswap/index";
 import PolygonQuickswapExports from "@optyfi/defi-legos/polygon/quickswap/index";
 import { eEthereumNetwork, ePolygonNetwork } from "../helpers/types";
@@ -58,7 +59,7 @@ const priceFeeds: { [key: string]: TokenPairPriceFeedStruct[] } = {
     },
     {
       priceFeed: "0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46",
-      tokenA: EthereumTokens.PLAIN_TOKENS.USDC,
+      tokenA: EthereumTokens.PLAIN_TOKENS.USDT,
       tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
     },
     {
@@ -192,7 +193,7 @@ describe("Swap Adapters", function () {
 
     const optyFiOracleArtifact: Artifact = await artifacts.readArtifact("OptyFiOracle");
     this.optyFiOracle = <OptyFiOracle>(
-      await waffle.deployContract(this.signers.deployer, optyFiOracleArtifact, ["3600", "3600"])
+      await waffle.deployContract(this.signers.deployer, optyFiOracleArtifact, ["86400", "86400"])
     );
 
     if (process.env.FORK === eEthereumNetwork.mainnet) {
@@ -219,7 +220,7 @@ describe("Swap Adapters", function () {
         this.uniswapV2ExchangeAdapterEthereum = <UniswapV2ExchangeAdapter>(
           await waffle.deployContract(this.signers.deployer, uniswapV2ExchangeAdapterArtifact, [
             this.mockRegistry.address,
-            EthereumExports.legos.uniswapv2.router02.address,
+            EthereumUniswapV2.router02.address,
             this.optyFiOracle.address,
           ])
         );
@@ -227,27 +228,10 @@ describe("Swap Adapters", function () {
         this.sushiswapExchangeAdapterEthereum = <UniswapV2ExchangeAdapter>(
           await waffle.deployContract(this.signers.deployer, uniswapV2ExchangeAdapterArtifact, [
             this.mockRegistry.address,
-            EthereumExports.legos.sushi.SushiswapRouter.address,
+            EthereumSushiswap.SushiswapRouter.address,
             this.optyFiOracle.address,
           ])
         );
-
-        for (const poolName of Object.keys(EthereumExports.legos.uniswapv2.liquidity.pools)) {
-          if (!uniswapV2EthereumTestPools.includes(poolName)) {
-            continue;
-          }
-          describe("uniswapV2ExchangeAdapterEthereum", async function () {
-            shouldBehaveLikeUniswapV2ExchangeAdapter();
-          });
-        }
-        for (const poolName of Object.keys(EthereumExports.legos.sushi.liquidity.pools)) {
-          if (!sushiswapEthereumTestPools.includes(poolName)) {
-            continue;
-          }
-          describe("sushiswapExchangeAdapterEthereum", async function () {
-            shouldBehaveLikeUniswapV2ExchangeAdapter();
-          });
-        }
       } else if (process.env.FORK === ePolygonNetwork.polygon) {
         this.sushiswapExchangeAdapterPolygon = <UniswapV2ExchangeAdapter>(
           await waffle.deployContract(this.signers.deployer, uniswapV2ExchangeAdapterArtifact, [
@@ -264,24 +248,113 @@ describe("Swap Adapters", function () {
             this.optyFiOracle.address,
           ])
         );
+      }
+    });
 
+    if (process.env.FORK === eEthereumNetwork.mainnet) {
+      describe("uniswapV2ExchangeAdapterEthereum", async function () {
+        for (const poolName of Object.keys(EthereumUniswapV2.liquidity.pools)) {
+          if (uniswapV2EthereumTestPools.includes(poolName)) {
+            shouldBehaveLikeUniswapV2ExchangeAdapter(
+              EthereumUniswapV2.liquidity.pools[poolName as keyof typeof EthereumUniswapV2.liquidity.pools].token0,
+              EthereumUniswapV2.liquidity.pools[poolName as keyof typeof EthereumUniswapV2.liquidity.pools].token1,
+              EthereumUniswapV2.liquidity.pools[poolName as keyof typeof EthereumUniswapV2.liquidity.pools],
+              poolName,
+              "uniswapV2",
+              EthereumUniswapV2.router02.address,
+            );
+            shouldBehaveLikeUniswapV2ExchangeAdapter(
+              EthereumUniswapV2.liquidity.pools[poolName as keyof typeof EthereumUniswapV2.liquidity.pools].token1,
+              EthereumUniswapV2.liquidity.pools[poolName as keyof typeof EthereumUniswapV2.liquidity.pools].token0,
+              EthereumUniswapV2.liquidity.pools[poolName as keyof typeof EthereumUniswapV2.liquidity.pools],
+              poolName,
+              "uniswapV2",
+              EthereumUniswapV2.router02.address,
+            );
+          }
+        }
+      });
+
+      describe("sushiswapExchangeAdapterEthereum", async function () {
+        for (const poolName of Object.keys(EthereumSushiswap.liquidity.pools)) {
+          if (sushiswapEthereumTestPools.includes(poolName)) {
+            shouldBehaveLikeUniswapV2ExchangeAdapter(
+              EthereumSushiswap.liquidity.pools[poolName as keyof typeof EthereumSushiswap.liquidity.pools].token0,
+              EthereumSushiswap.liquidity.pools[poolName as keyof typeof EthereumSushiswap.liquidity.pools].token1,
+              EthereumSushiswap.liquidity.pools[poolName as keyof typeof EthereumSushiswap.liquidity.pools],
+              poolName,
+              "sushiswap",
+              EthereumSushiswap.SushiswapRouter.address,
+            );
+            shouldBehaveLikeUniswapV2ExchangeAdapter(
+              EthereumSushiswap.liquidity.pools[poolName as keyof typeof EthereumSushiswap.liquidity.pools].token1,
+              EthereumSushiswap.liquidity.pools[poolName as keyof typeof EthereumSushiswap.liquidity.pools].token0,
+              EthereumSushiswap.liquidity.pools[poolName as keyof typeof EthereumSushiswap.liquidity.pools],
+              poolName,
+              "sushiswap",
+              EthereumSushiswap.SushiswapRouter.address,
+            );
+          }
+        }
+      });
+    }
+
+    if (process.env.FORK === ePolygonNetwork.polygon) {
+      describe("sushiswapExchangeAdapterPolygon", async function () {
         for (const poolName of Object.keys(PolygonSushiswapExports.liquidity.pools)) {
           if (!sushiswapPolygonTestPools.includes(poolName)) {
             continue;
           }
-          describe("sushiswapExchangeAdapterPolygon", async function () {
-            shouldBehaveLikeUniswapV2ExchangeAdapter();
-          });
+          shouldBehaveLikeUniswapV2ExchangeAdapter(
+            PolygonSushiswapExports.liquidity.pools[poolName as keyof typeof PolygonSushiswapExports.liquidity.pools]
+              .token0,
+            PolygonSushiswapExports.liquidity.pools[poolName as keyof typeof PolygonSushiswapExports.liquidity.pools]
+              .token1,
+            PolygonSushiswapExports.liquidity.pools[poolName as keyof typeof PolygonSushiswapExports.liquidity.pools],
+            poolName,
+            "sushiswap",
+            PolygonSushiswapExports.SushiswapRouter.address,
+          );
+          shouldBehaveLikeUniswapV2ExchangeAdapter(
+            PolygonSushiswapExports.liquidity.pools[poolName as keyof typeof PolygonSushiswapExports.liquidity.pools]
+              .token1,
+            PolygonSushiswapExports.liquidity.pools[poolName as keyof typeof PolygonSushiswapExports.liquidity.pools]
+              .token0,
+            PolygonSushiswapExports.liquidity.pools[poolName as keyof typeof PolygonSushiswapExports.liquidity.pools],
+            poolName,
+            "sushiswap",
+            PolygonSushiswapExports.SushiswapRouter.address,
+          );
         }
+      });
+
+      describe("quickswapExchangeAdapterPolygon", async function () {
         for (const poolName of Object.keys(PolygonQuickswapExports.liquidity.pools)) {
           if (!quickswapPolygonTestPools.includes(poolName)) {
             continue;
           }
-          describe("quickswapExchangeAdapterPolygon", async function () {
-            shouldBehaveLikeUniswapV2ExchangeAdapter();
-          });
+          shouldBehaveLikeUniswapV2ExchangeAdapter(
+            PolygonQuickswapExports.liquidity.pools[poolName as keyof typeof PolygonQuickswapExports.liquidity.pools]
+              .token0,
+            PolygonQuickswapExports.liquidity.pools[poolName as keyof typeof PolygonQuickswapExports.liquidity.pools]
+              .token1,
+            PolygonQuickswapExports.liquidity.pools[poolName as keyof typeof PolygonQuickswapExports.liquidity.pools],
+            poolName,
+            "quickswap",
+            PolygonQuickswapExports.QuickswapRouter.address,
+          );
+          shouldBehaveLikeUniswapV2ExchangeAdapter(
+            PolygonQuickswapExports.liquidity.pools[poolName as keyof typeof PolygonQuickswapExports.liquidity.pools]
+              .token1,
+            PolygonQuickswapExports.liquidity.pools[poolName as keyof typeof PolygonQuickswapExports.liquidity.pools]
+              .token0,
+            PolygonQuickswapExports.liquidity.pools[poolName as keyof typeof PolygonQuickswapExports.liquidity.pools],
+            poolName,
+            "quickswap",
+            PolygonQuickswapExports.QuickswapRouter.address,
+          );
         }
-      }
-    });
+      });
+    }
   });
 });

@@ -194,7 +194,8 @@ export function shouldBehaveLikeCurveExchangeAdapter(
     let calculatedSomeAmountInToken;
     if (
       getAddress(await this.curveMetaRegistry["get_lp_token(address)"](poolItem.pool)) ==
-      getAddress(inputTokenInstance.address)
+        getAddress(inputTokenInstance.address) &&
+      poolItem.tokenIndexes
     ) {
       const stableSwapInstance = <ICurveSwap>await ethers.getContractAt(ICurveSwap__factory.abi, poolItem.pool);
       const _numTokens = await this.curveMetaRegistry["get_n_underlying_coins(address)"](poolItem.pool);
@@ -365,7 +366,9 @@ async function getCalculatedAmountInLpToken(
 ): Promise<BigNumber> {
   if (
     getAddress(await curveMetaRegistryInstance["get_lp_token(address)"](poolItem.pool)) ==
-    getAddress(inputTokenInstance.address)
+      getAddress(inputTokenInstance.address) &&
+    poolItem &&
+    poolItem.tokenIndexes
   ) {
     const stableSwapInstance = <ICurveSwap>await ethers.getContractAt(ICurveSwap__factory.abi, poolItem.pool);
     return await stableSwapInstance["calc_withdraw_one_coin(uint256,int128)"](
@@ -396,7 +399,9 @@ async function getCalculatedAmountInToken(
 ): Promise<BigNumber> {
   if (
     getAddress(await curveMetaRegistryInstance["get_lp_token(address)"](poolItem.pool)) ==
-    getAddress(inputTokenInstance.address)
+      getAddress(inputTokenInstance.address) &&
+    poolItem &&
+    poolItem.tokenIndexes
   ) {
     const stableSwapInstance = <ICurveSwap>await ethers.getContractAt(ICurveSwap__factory.abi, poolItem.pool);
     const _numTokens = await curveMetaRegistryInstance["get_n_underlying_coins(address)"](poolItem.pool);

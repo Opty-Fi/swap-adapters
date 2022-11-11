@@ -26,13 +26,15 @@ export interface Signers {
 
 export interface PoolItem {
   pool: string;
-  lpToken: string;
+  lpToken?: string;
   stakingVault?: string;
   rewardTokens?: string[];
-  tokens: string[];
+  tokens?: string[];
   swap?: string;
   deprecated?: boolean;
-  tokenIndexes: string[];
+  tokenIndexes?: string[];
+  token0?: string;
+  token1?: string;
 }
 
 export interface LiquidityPool {
