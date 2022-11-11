@@ -191,72 +191,14 @@ export function shouldBehaveLikeCurveExchangeAdapter(
 
     // 5. some amount in token
 
-    let calculatedSomeAmountInToken;
-    if (
-      getAddress(await this.curveMetaRegistry["get_lp_token(address)"](poolItem.pool)) ==
-        getAddress(inputTokenInstance.address) &&
-      poolItem.tokenIndexes
-    ) {
-      const stableSwapInstance = <ICurveSwap>await ethers.getContractAt(ICurveSwap__factory.abi, poolItem.pool);
-      const _numTokens = await this.curveMetaRegistry["get_n_underlying_coins(address)"](poolItem.pool);
-      if (_numTokens.eq(3) && poolItem.tokenIndexes[0] == "0") {
-        calculatedSomeAmountInToken = await stableSwapInstance["calc_token_amount(uint256[3],bool)"](
-          [expectedlpTokenBalance.div(2), 0, 0],
-          true,
-        );
-      } else if (_numTokens.eq(3) && poolItem.tokenIndexes[0] == "1") {
-        calculatedSomeAmountInToken = await stableSwapInstance["calc_token_amount(uint256[3],bool)"](
-          [0, expectedlpTokenBalance.div(2), 0],
-          true,
-        );
-      } else if (_numTokens.eq(3) && poolItem.tokenIndexes[0] == "2") {
-        calculatedSomeAmountInToken = await stableSwapInstance["calc_token_amount(uint256[3],bool)"](
-          [0, 0, expectedlpTokenBalance.div(2)],
-          true,
-        );
-      } else if (_numTokens.eq(2) && poolItem.tokenIndexes[0] == "0") {
-        calculatedSomeAmountInToken = await stableSwapInstance["calc_token_amount(uint256[2],bool)"](
-          [expectedlpTokenBalance.div(2), 0],
-          true,
-        );
-      } else if (_numTokens.eq(2) && poolItem.tokenIndexes[0] == "1") {
-        calculatedSomeAmountInToken = await stableSwapInstance["calc_token_amount(uint256[2],bool)"](
-          [0, expectedlpTokenBalance.div(2)],
-          true,
-        );
-      } else if (_numTokens.eq(4) && poolItem.tokenIndexes[0] == "0") {
-        calculatedSomeAmountInToken = await stableSwapInstance["calc_token_amount(uint256[4],bool)"](
-          [expectedlpTokenBalance.div(2), 0, 0, 0],
-          true,
-        );
-      } else if (_numTokens.eq(4) && poolItem.tokenIndexes[0] == "1") {
-        calculatedSomeAmountInToken = await stableSwapInstance["calc_token_amount(uint256[4],bool)"](
-          [0, expectedlpTokenBalance.div(2), 0, 0],
-          true,
-        );
-      } else if (_numTokens.eq(4) && poolItem.tokenIndexes[0] == "2") {
-        calculatedSomeAmountInToken = await stableSwapInstance["calc_token_amount(uint256[4],bool)"](
-          [0, 0, expectedlpTokenBalance.div(2), 0],
-          true,
-        );
-      } else if (_numTokens.eq(4) && poolItem.tokenIndexes[0] == "3") {
-        calculatedSomeAmountInToken = await stableSwapInstance["calc_token_amount(uint256[4],bool)"](
-          [0, 0, 0, expectedlpTokenBalance.div(2)],
-          true,
-        );
-      }
-    } else {
-      calculatedSomeAmountInToken = await this.curveRegistryExchange.get_exchange_amount(
-        poolItem.pool,
-        getAddress(outputTokenInstance.address) === getAddress(EthereumTokens.WRAPPED_TOKENS.WETH)
-          ? EthereumTokens.PLAIN_TOKENS.ETH
-          : outputTokenInstance.address,
-        getAddress(inputTokenInstance.address) === getAddress(EthereumTokens.WRAPPED_TOKENS.WETH)
-          ? EthereumTokens.PLAIN_TOKENS.ETH
-          : inputTokenInstance.address,
-        expectedlpTokenBalance.div(2),
-      );
-    }
+    const calculatedSomeAmountInToken = await getCalculatedAmountInToken(
+      this.curveMetaRegistry,
+      this.curveRegistryExchange,
+      poolItem,
+      inputTokenInstance,
+      expectedlpTokenBalance.div(2),
+      outputTokenInstance,
+    );
     const actualSomeAmountInToken = await this.curveExchangeAdapter.getSomeAmountInToken(
       inputTokenInstance.address,
       poolItem.pool,
@@ -307,7 +249,7 @@ export function shouldBehaveLikeCurveExchangeAdapter(
     );
     await tx.wait(1);
 
-    // 3. assert whether lptoken balance is as expected or not after deposit
+    // 9. assert whether lptoken balance is as expected or not after deposit
     const _actuallpTokenBalance = await outputTokenInstance.balanceOf(this.testDeFiAdapterForCurveExchange.address);
     expect(_actuallpTokenBalance).to.gte(_calculatedAmountInLpToken.mul(9900).div(10000));
 
@@ -319,7 +261,7 @@ export function shouldBehaveLikeCurveExchangeAdapter(
     );
     expect(_expectedlpTokenBalance).to.eq(_actuallpTokenBalance);
 
-    // 9. withdraw some
+    // 10. withdraw some
 
     tx = await this.testDeFiAdapterForCurveExchange.testGetWithdrawSomeCodes(
       inputTokenInstance.address,
@@ -329,7 +271,7 @@ export function shouldBehaveLikeCurveExchangeAdapter(
       outputTokenInstance.address,
     );
     await tx.wait(1);
-    // 10. assert whether input token balance is as expected or not after withdraw
+    // 11. assert whether input token balance is as expected or not after withdraw
 
     const _actualSomeAmountInToken = await getCalculatedAmountInToken(
       this.curveMetaRegistry,

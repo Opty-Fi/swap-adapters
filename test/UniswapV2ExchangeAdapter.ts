@@ -11,9 +11,13 @@ import { eEthereumNetwork, ePolygonNetwork } from "../helpers/types";
 import { Signers } from "./types";
 import { OptyFiOracle, TestDeFiAdapter, UniswapV2ExchangeAdapter } from "../typechain";
 import { TokenPairPriceFeedStruct } from "../typechain/OptyFiOracle";
-import { shouldBehaveLikeUniswapV2ExchangeAdapter } from "./UniswapV2Exchange.behaviour";
+import {
+  shouldBehaveLikeUniswapV2ExchangeAdapter,
+  shouldInitializeVariablesLikeUniswapV2ExchangeAdapter,
+  shouldPerformStateChangesLikeUniswapV2ExchangeAdapter,
+} from "./UniswapV2Exchange.behaviour";
 
-const uniswapV2EthereumTestPools = ["USDC-ETH", "DAI-USDC", "ETH-USDT", "UNI-ETH", "PAXG-ETH", "FXS-FRAX"];
+const uniswapV2EthereumTestPools = ["USDC-ETH", "DAI-USDC", "ETH-USDT", "UNI-ETH"];
 
 const sushiswapEthereumTestPools = [
   "ILV-ETH",
@@ -23,8 +27,6 @@ const sushiswapEthereumTestPools = [
   "WBTC-ETH",
   "SUSHI-WETH",
   "TOKE-ETH",
-  "ALCX-WETH",
-  "DAI-ETH",
 ];
 
 const sushiswapPolygonTestPools = ["MATIC-WETH", "USDC-WETH", "TUSD-USDC", "USDC-USDT"];
@@ -68,21 +70,6 @@ const priceFeeds: { [key: string]: TokenPairPriceFeedStruct[] } = {
       tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
     },
     {
-      priceFeed: "0x9B97304EA12EFed0FAd976FBeCAad46016bf269e",
-      tokenA: EthereumTokens.PLAIN_TOKENS.PAXG,
-      tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
-    },
-    {
-      priceFeed: "0x6Ebc52C8C1089be9eB3945C4350B68B8E4C2233f",
-      tokenA: EthereumTokens.PLAIN_TOKENS.FXS,
-      tokenB: EthereumTokens.PLAIN_TOKENS.USD,
-    },
-    {
-      priceFeed: "0xB9E1E3A9feFf48998E45Fa90847ed4D467E8BcfD",
-      tokenA: EthereumTokens.PLAIN_TOKENS.FRAX,
-      tokenB: EthereumTokens.PLAIN_TOKENS.USD,
-    },
-    {
       priceFeed: "0xf600984CCa37cd562E74E3EE514289e3613ce8E4",
       tokenA: EthereumTokens.REWARD_TOKENS.ILV,
       tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
@@ -111,16 +98,6 @@ const priceFeeds: { [key: string]: TokenPairPriceFeedStruct[] } = {
       priceFeed: "0x104cD02b2f22972E8d8542867a36bDeDA4f104d8",
       tokenA: EthereumTokens.REWARD_TOKENS.TOKE,
       tokenB: EthereumTokens.PLAIN_TOKENS.USD,
-    },
-    {
-      priceFeed: "0x194a9AaF2e0b67c35915cD01101585A33Fe25CAa",
-      tokenA: EthereumTokens.REWARD_TOKENS.ALCX,
-      tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
-    },
-    {
-      priceFeed: "0x773616E4d11A78F511299002da57A0a94577F1f4",
-      tokenA: EthereumTokens.PLAIN_TOKENS.DAI,
-      tokenB: EthereumTokens.WRAPPED_TOKENS.WETH,
     },
   ],
   [ePolygonNetwork.polygon]: [
@@ -253,6 +230,8 @@ describe("Swap Adapters", function () {
 
     if (process.env.FORK === eEthereumNetwork.mainnet) {
       describe("uniswapV2ExchangeAdapterEthereum", async function () {
+        shouldInitializeVariablesLikeUniswapV2ExchangeAdapter("uniswapV2");
+        shouldPerformStateChangesLikeUniswapV2ExchangeAdapter("uniswapV2");
         for (const poolName of Object.keys(EthereumUniswapV2.liquidity.pools)) {
           if (uniswapV2EthereumTestPools.includes(poolName)) {
             shouldBehaveLikeUniswapV2ExchangeAdapter(
@@ -276,6 +255,8 @@ describe("Swap Adapters", function () {
       });
 
       describe("sushiswapExchangeAdapterEthereum", async function () {
+        shouldInitializeVariablesLikeUniswapV2ExchangeAdapter("sushiswap");
+        shouldPerformStateChangesLikeUniswapV2ExchangeAdapter("sushiswap");
         for (const poolName of Object.keys(EthereumSushiswap.liquidity.pools)) {
           if (sushiswapEthereumTestPools.includes(poolName)) {
             shouldBehaveLikeUniswapV2ExchangeAdapter(
@@ -300,6 +281,8 @@ describe("Swap Adapters", function () {
     }
 
     if (process.env.FORK === ePolygonNetwork.polygon) {
+      shouldInitializeVariablesLikeUniswapV2ExchangeAdapter("sushiswap");
+      shouldPerformStateChangesLikeUniswapV2ExchangeAdapter("sushiswap");
       describe("sushiswapExchangeAdapterPolygon", async function () {
         for (const poolName of Object.keys(PolygonSushiswapExports.liquidity.pools)) {
           if (!sushiswapPolygonTestPools.includes(poolName)) {
@@ -329,6 +312,8 @@ describe("Swap Adapters", function () {
       });
 
       describe("quickswapExchangeAdapterPolygon", async function () {
+        shouldInitializeVariablesLikeUniswapV2ExchangeAdapter("quickswap");
+        shouldPerformStateChangesLikeUniswapV2ExchangeAdapter("quickswap");
         for (const poolName of Object.keys(PolygonQuickswapExports.liquidity.pools)) {
           if (!quickswapPolygonTestPools.includes(poolName)) {
             continue;

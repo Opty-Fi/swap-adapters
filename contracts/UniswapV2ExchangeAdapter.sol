@@ -190,7 +190,6 @@ contract UniswapV2ExchangeAdapter is IAdapterV2, AdapterModifiersBase {
         address _liquidityPool,
         address _outputToken
     ) public view override returns (uint256) {
-        // use oracle to return the price of _outputToken in terms of _underlyingToken
         return
             getSomeAmountInToken(_underlyingToken, _liquidityPool, _outputToken, ERC20(_outputToken).balanceOf(_vault));
     }
@@ -204,7 +203,6 @@ contract UniswapV2ExchangeAdapter is IAdapterV2, AdapterModifiersBase {
         address,
         address _outputToken
     ) public view override returns (uint256) {
-        // balance of other token and not the underlyingToken
         return ERC20(_outputToken).balanceOf(_vault);
     }
 
