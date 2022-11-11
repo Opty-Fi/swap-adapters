@@ -299,6 +299,9 @@ export function shouldBehaveLikeUniswapV2ExchangeAdapter(
       this.testDeFiAdapterForUniswapV2Exchange.address,
     );
     expect(_actualInputTokenBalance.sub(_inputTokenTestAmount)).to.gte(_actualSomeAmountInToken.mul(9800).div(10000));
+
+    // 12. can stake should return false
+    expect(await adapterInstance.canStake(poolItem.pool)).to.be.false;
   });
 }
 

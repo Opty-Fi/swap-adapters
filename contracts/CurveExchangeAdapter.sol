@@ -365,6 +365,10 @@ contract CurveExchangeAdapter is IAdapterV2, AdapterModifiersBase {
         return 0;
     }
 
+    function canStake(address) external pure returns (bool) {
+        return false;
+    }
+
     function _getLpToken(address _liquidityPool) internal view returns (address) {
         return META_REGISTRY.get_lp_token(_liquidityPool);
     }
