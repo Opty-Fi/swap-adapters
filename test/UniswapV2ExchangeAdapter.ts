@@ -36,7 +36,6 @@ const quickswapPolygonTestPools = [
   "WETH-USDT",
   "WBTC-WETH",
   "WMATIC-WETH",
-  "USDC-miMATIC",
   "USDC-USDT",
   "USDC-WETH",
   "WMATIC-USDC",
@@ -140,11 +139,6 @@ const priceFeeds: { [key: string]: TokenPairPriceFeedStruct[] } = {
       priceFeed: "0xA338e0492B2F944E9F8C0653D3AD1484f2657a37",
       tokenA: PolygonTokens.WBTC,
       tokenB: PolygonTokens.WETH,
-    },
-    {
-      priceFeed: "0xd8d483d813547CfB624b8Dc33a00F2fcbCd2D428",
-      tokenA: PolygonTokens.MIMATIC,
-      tokenB: PolygonTokens.USD,
     },
     {
       priceFeed: "0xAB594600376Ec9fD91F8e885dADF0CE036862dE0",
