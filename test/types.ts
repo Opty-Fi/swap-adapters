@@ -1,8 +1,15 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Fixture, MockContract } from "ethereum-waffle";
 import { Artifact } from "hardhat/types";
-import { TestDeFiAdapter } from "../typechain";
-import { UniswapV2PoolAdapter } from "../typechain/UniswapV2PoolAdapter";
+import {
+  CurveExchangeAdapter,
+  CurveExchangeETHGateway,
+  ICurveMetaRegistry,
+  ICurveRegistryExchange,
+  OptyFiOracle,
+  TestDeFiAdapter,
+  UniswapV2ExchangeAdapter,
+} from "../typechain";
 
 export interface Signers {
   admin: SignerWithAddress;
@@ -19,13 +26,15 @@ export interface Signers {
 
 export interface PoolItem {
   pool: string;
-  lpToken: string;
+  lpToken?: string;
   stakingVault?: string;
   rewardTokens?: string[];
-  tokens: string[];
+  tokens?: string[];
   swap?: string;
   deprecated?: boolean;
-  tokenIndexes: string[];
+  tokenIndexes?: string[];
+  token0?: string;
+  token1?: string;
 }
 
 export interface LiquidityPool {
@@ -34,9 +43,19 @@ export interface LiquidityPool {
 
 declare module "mocha" {
   export interface Context {
-    uniswapV2PoolAdapter: UniswapV2PoolAdapter;
+    uniswapV2ExchangeAdapterEthereum: UniswapV2ExchangeAdapter;
+    sushiswapExchangeAdapterEthereum: UniswapV2ExchangeAdapter;
+    sushiswapExchangeAdapterPolygon: UniswapV2ExchangeAdapter;
+    quickswapExchangeAdapterPolygon: UniswapV2ExchangeAdapter;
+    testDeFiAdapterForUniswapV2Exchange: TestDeFiAdapter;
+    curveExchangeAdapter: CurveExchangeAdapter;
+    curveExchangeETHGateway: CurveExchangeETHGateway;
+    testDeFiAdapterForCurveExchange: TestDeFiAdapter;
     testDeFiAdapterArtifact: Artifact;
-    testDeFiAdapterForUniswapV2Pool: TestDeFiAdapter;
+    curveMetaRegistry: ICurveMetaRegistry;
+    curveRegistryExchange: ICurveRegistryExchange;
+    optyFiOracleArtifact: Artifact;
+    optyFiOracle: OptyFiOracle;
     mockRegistry: MockContract;
     loadFixture: <T>(fixture: Fixture<T>) => Promise<T>;
     signers: Signers;

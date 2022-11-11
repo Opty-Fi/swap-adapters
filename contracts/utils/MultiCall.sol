@@ -17,12 +17,13 @@ abstract contract MultiCall {
      * @notice Executes any functionality and check if it is working or not
      * @dev Execute the code and revert with error message if code provided is incorrect
      * @param _code Encoded data in bytes which acts as code to execute
-     * @param _errorMsg Error message to throw when code execution call fails
      */
-    function executeCode(bytes memory _code, string memory _errorMsg) internal {
+    function executeCode(bytes memory _code, string memory) internal {
         (address _contract, bytes memory _data) = abi.decode(_code, (address, bytes));
-        (bool _success, ) = _contract.call(_data); //solhint-disable-line avoid-low-level-calls
-        require(_success, _errorMsg);
+        (bool _success, bytes memory _returnData) = _contract.call(_data); //solhint-disable-line avoid-low-level-calls
+        if (!_success) {
+            revert(string(_returnData));
+        }
     }
 
     /**
