@@ -237,6 +237,10 @@ contract UniswapV2ExchangeAdapter is IAdapterV2, AdapterModifiersBase {
             (_inputTokenAmount * _getTokenPrice(_inputToken, _outputToken) * 10**_decimalsB) / (10**(18 + _decimalsA));
     }
 
+    function canStake(address) external pure returns (bool) {
+        return false;
+    }
+
     /**
      * @dev Return the price of tokenA in tokenB
      * @param _tokenA Contract address of one of the liquidity pool's underlying token

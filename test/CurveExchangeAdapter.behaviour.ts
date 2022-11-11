@@ -284,6 +284,9 @@ export function shouldBehaveLikeCurveExchangeAdapter(
 
     const _actualInputTokenBalance = await inputTokenInstance.balanceOf(this.testDeFiAdapterForCurveExchange.address);
     expect(_actualInputTokenBalance.sub(_inputTokenTestAmount)).to.gte(_actualSomeAmountInToken.mul(9900).div(10000));
+
+    // 12. can stake should return false
+    expect(await this.curveExchangeAdapter.canStake(poolItem.pool)).to.be.false;
   });
 }
 
